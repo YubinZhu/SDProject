@@ -27,8 +27,8 @@ public class ProdQueryController {
     /* template
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
-            String query = "";
-            ResultSet resultSet = QueryTableService.query(query);
+            String sqlSentence = "";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
 
             // logical code here
 
@@ -76,15 +76,15 @@ public class ProdQueryController {
     public ObjectNode queryCompanyCategory(HttpServletRequest httpServletRequest) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
-            String query = "select distinct(ent_label) from ent_info";
-            ResultSet resultSet = QueryTableService.query(query);
+            String sqlSentence = "select distinct(ent_label) from ent_info order by ent_label asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
             ArrayNode arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
                 arrayNode.add(resultSet.getString("ent_label"));
             }
             objectNode.set("ent_label", arrayNode);
-            query = "select distinct(ent_industry) from ent_info";
-            resultSet = QueryTableService.query(query);
+            sqlSentence = "select distinct(ent_industry) from ent_info order by ent_label asc";
+            resultSet = QueryTableService.query(sqlSentence);
             arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
                 arrayNode.add(resultSet.getString("ent_industry"));
@@ -101,19 +101,20 @@ public class ProdQueryController {
 
     @GetMapping("/queryCompanyCoordinates")
     public ObjectNode queryCompanyCoordinates(HttpServletRequest httpServletRequest,
-                                              @RequestParam(required = false, value = "ent_label") String ent_label,
-                                              @RequestParam(required = false, value = "ent_industry") String ent_industry) {
+                                              @RequestParam(required = false, value = "label") String label,
+                                              @RequestParam(required = false, value = "industry") String industry) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
-            String query = "select ent_id, lon, lat from ent_info";
-            if (ent_label != null && ent_industry != null) {
-                query += " where ent_label = '" + ent_label + "' and ent_industry = '" + ent_industry + "'";
-            } else if (ent_label != null) {
-                query += " where ent_label = '" + ent_label + "'";
-            } else if (ent_industry != null) {
-                query += " where ent_industry = '" + ent_industry + "'";
+            String sqlSentence = "select ent_id, lon, lat from ent_info";
+            if (label != null && industry != null) {
+                sqlSentence += " where ent_label = '" + label + "' and ent_industry = '" + industry + "'";
+            } else if (label != null) {
+                sqlSentence += " where ent_label = '" + label + "'";
+            } else if (industry != null) {
+                sqlSentence += " where ent_industry = '" + industry + "'";
             }
-            ResultSet resultSet = QueryTableService.query(query);
+            sqlSentence += " order by ent_id asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
             ArrayNode arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
                 ObjectNode featureObjectNode = jacksonObjectMapper.createObjectNode();
@@ -138,5 +139,52 @@ public class ProdQueryController {
         return objectNode;
     }
 
+    @GetMapping("/queryCompanyList")
+    public ObjectNode queryCompanyList(HttpServletRequest httpServletRequest,
+                                       @RequestParam(value = "name") String name) {
+        ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select ent_id, ent_name from ent_info where ent_name ~* '" + name + "' order by ent_id asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            ArrayNode arrayNode = jacksonObjectMapper.createArrayNode();
+            while (resultSet.next()) {
+                ObjectNode tempObjectNode = jacksonObjectMapper.createObjectNode();
+                tempObjectNode.put("id", resultSet.getInt("ent_id"));
+                tempObjectNode.put("name", resultSet.getString("name"));
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("company", arrayNode);
+            printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
+    @GetMapping("/queryCompanyInformation")
+    public ObjectNode queryCompanyInformation(HttpServletRequest httpServletRequest,
+                                              @RequestParam(value = "id") String id) {
+        ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select * from ent_info where id=" + id;
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            if (resultSet.next()) {
+                objectNode.put("id", resultSet.getInt("ent_id"));
+                objectNode.put("name", resultSet.getString("ent_name"));
+                objectNode.put("label", resultSet.getString("ent_label"));
+                objectNode.put("industry", resultSet.getString("ent_industry"));
+                objectNode.put("lon", resultSet.getDouble("lon"));
+                objectNode.put("lat", resultSet.getDouble("lat"));
+            }
+            printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
 
 }
