@@ -22,7 +22,7 @@ import java.util.HashMap;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/info")
+@RequestMapping("/demo")
 public class InfoQueryController {
 
     /* template
