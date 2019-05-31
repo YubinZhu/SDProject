@@ -260,7 +260,7 @@ public class InfoQueryController {
 
     @GetMapping("/queryParkInformationById")
     public ObjectNode queryParkInformationById(HttpServletRequest httpServletRequest,
-                                               @RequestParam(value = "name") int queriedId) {
+                                               @RequestParam(value = "id") int queriedId) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
             ResultSet resultSet = QueryTableService.query("select * from park_info where id = " + queriedId);
@@ -320,7 +320,7 @@ public class InfoQueryController {
     }
 
     // todo : complete
-    @GetMapping("/queryAggregateCompanyInformationByCategory")
+    // @GetMapping("/queryAggregateCompanyInformationByCategory")
     public ObjectNode queryAggregateCompanyInformationByCategory(HttpServletRequest httpServletRequest,
                                                                  @RequestParam(required = false, value = "name") String queriedCategory) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
@@ -336,7 +336,7 @@ public class InfoQueryController {
     }
 
     // todo ： different park has different companies.
-    @GetMapping("queryAggregateParkInformationById")
+    // @GetMapping("queryAggregateParkInformationById")
     public ObjectNode queryAggregateParkInformationById(HttpServletRequest httpServletRequest,
                                                         @RequestParam(value = "id") int queriedId) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
