@@ -335,7 +335,7 @@ public class InfoQueryController {
         return objectNode;
     }
 
-    // todo ： different park has different companies.
+    // todo ： different park has different companies
     // @GetMapping("queryAggregateParkInformationById")
     public ObjectNode queryAggregateParkInformationById(HttpServletRequest httpServletRequest,
                                                         @RequestParam(value = "id") int queriedId) {
