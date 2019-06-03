@@ -14,6 +14,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 /**
  * Created by yubzhu on 19-5-30
@@ -179,6 +180,46 @@ public class ProdQueryController {
                 objectNode.put("lon", resultSet.getDouble("lon"));
                 objectNode.put("lat", resultSet.getDouble("lat"));
             }
+            printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
+    @GetMapping("/queryCompanyHeatmap")
+    public ObjectNode queryCompanyHeatmap(HttpServletRequest httpServletRequest) {
+        ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select lon, lat from ent_info";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            int heatmapPrecision = 4;
+            HashMap<String, Integer> hashMap = new HashMap<>();
+            while (resultSet.next()) {
+                String lon = String.valueOf(resultSet.getDouble("lon"));
+                String lat = String.valueOf(resultSet.getDouble("lat"));
+                String index = lon.split("\\.")[0] + "." + lon.split("\\.")[1].concat("0000").substring(0, heatmapPrecision) + "," + lat.split("\\.")[0] + "." + lat.split("\\.")[1].concat("0000").substring(0, heatmapPrecision);
+                hashMap.putIfAbsent(index, 0);
+                hashMap.put(index, hashMap.get(index) + 1);
+            }
+            objectNode.put("type", "FeatureCollection");
+            ArrayNode arrayNode = jacksonObjectMapper.createArrayNode();
+            for (String string : hashMap.keySet()) {
+                ObjectNode tempObjectNode = jacksonObjectMapper.createObjectNode();
+                tempObjectNode.put("type", "Feature");
+                tempObjectNode.put("weight", hashMap.get(string));
+                ObjectNode insideObjectNode = jacksonObjectMapper.createObjectNode();
+                insideObjectNode.put("type", "Point");
+                ArrayNode insideArrayNode = jacksonObjectMapper.createArrayNode();
+                insideArrayNode.add(Double.parseDouble(string.split(",")[0]));
+                insideArrayNode.add(Double.parseDouble(string.split(",")[1]));
+                insideObjectNode.set("coordinates", insideArrayNode);
+                tempObjectNode.set("geometry", insideObjectNode);
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("features", arrayNode);
             printQueryOkInfo(httpServletRequest);
         } catch (ClassNotFoundException | SQLException e) {
             printExceptionOccurredWarning(httpServletRequest, e);
