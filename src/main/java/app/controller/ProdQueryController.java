@@ -83,7 +83,7 @@ public class ProdQueryController {
                 arrayNode.add(resultSet.getString("ent_label"));
             }
             objectNode.set("ent_label", arrayNode);
-            sqlSentence = "select distinct(ent_industry) from ent_info order by ent_label asc";
+            sqlSentence = "select distinct(ent_industry) from ent_info order by ent_industry asc";
             resultSet = QueryTableService.query(sqlSentence);
             arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
