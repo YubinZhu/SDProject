@@ -2,7 +2,7 @@
 
 `current version` test-0.2
 
-`Description` For sai di project.
+`description` For sai di project.
 
 ### environment required
 
