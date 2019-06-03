@@ -76,14 +76,14 @@ public class ProdQueryController {
     public ObjectNode queryCompanyCategory(HttpServletRequest httpServletRequest) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
-            String sqlSentence = "select distinct(ent_label) from ent_info order by ent_label asc";
+            String sqlSentence = "select distinct(ent_label) from ent_info where ent_label is not null order by ent_label asc";
             ResultSet resultSet = QueryTableService.query(sqlSentence);
             ArrayNode arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
                 arrayNode.add(resultSet.getString("ent_label"));
             }
             objectNode.set("ent_label", arrayNode);
-            sqlSentence = "select distinct(ent_industry) from ent_info order by ent_industry asc";
+            sqlSentence = "select distinct(ent_industry) from ent_info where ent_industry is not null order by ent_industry asc";
             resultSet = QueryTableService.query(sqlSentence);
             arrayNode = jacksonObjectMapper.createArrayNode();
             while (resultSet.next()) {
@@ -105,7 +105,7 @@ public class ProdQueryController {
                                               @RequestParam(required = false, value = "industry") String industry) {
         ObjectNode objectNode = jacksonObjectMapper.createObjectNode();
         try {
-            String sqlSentence = "select ent_id, lon, lat from ent_info";
+            String sqlSentence = "select ent_id, ent_industry, lon, lat from ent_info";
             if (label != null && industry != null) {
                 sqlSentence += " where ent_label = '" + label + "' and ent_industry = '" + industry + "'";
             } else if (label != null) {
@@ -119,7 +119,8 @@ public class ProdQueryController {
             while (resultSet.next()) {
                 ObjectNode featureObjectNode = jacksonObjectMapper.createObjectNode();
                 featureObjectNode.put("type", "Feature");
-                featureObjectNode.put(" id", resultSet.getInt("ent_id"));
+                featureObjectNode.put("id", resultSet.getInt("ent_id"));
+                featureObjectNode.put("industry", resultSet.getString("ent_industry"));
                 ObjectNode geometryObjectNode = jacksonObjectMapper.createObjectNode();
                 geometryObjectNode.put("type", "Point");
                 ArrayNode coordArrayNode = jacksonObjectMapper.createArrayNode();
