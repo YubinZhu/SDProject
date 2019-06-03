@@ -1,8 +1,13 @@
 # SDProject
-For sai di project
+
+`current version` test-0.2
+
+`Description` For sai di project.
 
 ### environment required
-* java runtime environment
+
+* java runtime environment (java8u212)
 
 ### app run command:
+
 * java -jar [jar file] --server.port=[port]
