@@ -1,6 +1,6 @@
 # SDProject
 
-`current version` test-0.2
+`current version` test-0.3
 
 `description` For sai di project.
 

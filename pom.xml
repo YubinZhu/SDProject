@@ -6,7 +6,7 @@
 
     <groupId>DMB-yubzhu</groupId>
     <artifactId>app</artifactId>
-    <version>test-0.2</version>
+    <version>test-0.3</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
