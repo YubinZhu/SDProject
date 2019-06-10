@@ -37,7 +37,7 @@ public class ListController {
             while (resultSet.next()) {
                 ObjectNode tempObjectNode = objectMapper.createObjectNode();
                 tempObjectNode.put("id", resultSet.getInt("ent_id"));
-                tempObjectNode.put("name", resultSet.getString("name"));
+                tempObjectNode.put("name", resultSet.getString("ent_name"));
                 arrayNode.add(tempObjectNode);
             }
             objectNode.set("company", arrayNode);

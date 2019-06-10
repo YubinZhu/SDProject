@@ -30,7 +30,7 @@ public class InformationController {
                                               @RequestParam(value = "id") String id) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
-            String sqlSentence = "select * from ent_info where id=" + id;
+            String sqlSentence = "select * from ent_info where ent_id=" + id;
             ResultSet resultSet = QueryTableService.query(sqlSentence);
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("ent_id"));
