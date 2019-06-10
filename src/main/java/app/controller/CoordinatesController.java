@@ -27,7 +27,7 @@ public class CoordinatesController {
     private static LogService log = new LogService(CoordinatesController.class);
 
     @GetMapping("/qingdao")
-    public ObjectNode queryCompanyCoordinates(HttpServletRequest httpServletRequest,
+    public ObjectNode queryQingDaoCompanyCoordinates(HttpServletRequest httpServletRequest,
                                               @RequestParam(required = false, value = "label") String label,
                                               @RequestParam(required = false, value = "industry") String industry) {
         ObjectNode objectNode = objectMapper.createObjectNode();

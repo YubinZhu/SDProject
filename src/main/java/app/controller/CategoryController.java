@@ -30,7 +30,7 @@ public class CategoryController {
     private static LogService log = new LogService(CategoryController.class);
 
     @GetMapping("/qingdao")
-    public ObjectNode queryCompanyCategory(HttpServletRequest httpServletRequest) {
+    public ObjectNode queryQingDaoCompanyCategory(HttpServletRequest httpServletRequest) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
             String sqlSentence = "select distinct(ent_label) from ent_info where ent_label is not null order by ent_label asc";

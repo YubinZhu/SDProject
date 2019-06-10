@@ -27,7 +27,7 @@ public class ListController {
     private static LogService log = new LogService(ListController.class);
 
     @GetMapping("/qingdao")
-    public ObjectNode queryCompanyList(HttpServletRequest httpServletRequest,
+    public ObjectNode queryQingDaoCompanyList(HttpServletRequest httpServletRequest,
                                        @RequestParam(value = "name") String name) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {

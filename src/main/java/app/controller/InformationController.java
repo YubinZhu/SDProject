@@ -26,7 +26,7 @@ public class InformationController {
     private static LogService log = new LogService(InformationController.class);
 
     @GetMapping("/qingdao")
-    public ObjectNode queryCompanyInformation(HttpServletRequest httpServletRequest,
+    public ObjectNode queryQingDaoCompanyInformation(HttpServletRequest httpServletRequest,
                                               @RequestParam(value = "id") String id) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {

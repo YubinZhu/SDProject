@@ -31,7 +31,7 @@ public class HeatmapController {
     private static LogService log = new LogService(HeatmapController.class);
 
     @GetMapping("/qingdao")
-    public ObjectNode queryCompanyHeatmap(HttpServletRequest httpServletRequest) {
+    public ObjectNode queryQingDaoCompanyHeatmap(HttpServletRequest httpServletRequest) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
             String sqlSentence = "select lon, lat from ent_info";
