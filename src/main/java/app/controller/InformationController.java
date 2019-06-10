@@ -48,4 +48,30 @@ public class InformationController {
         }
         return objectNode;
     }
+
+    @GetMapping("/listed")
+    public ObjectNode queryListedCompanyInformation(HttpServletRequest httpServletRequest,
+                                                     @RequestParam(value = "id") String id) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select * from comp_info where id=" + id;
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            if (resultSet.next()) {
+                objectNode.put("id", resultSet.getInt("id"));
+                objectNode.put("name", resultSet.getString("full_name"));
+                objectNode.put("lon", resultSet.getDouble("lon"));
+                objectNode.put("lat", resultSet.getDouble("lat"));
+                objectNode.put("location", resultSet.getString("location"));
+                objectNode.put("website", resultSet.getString("website"));;
+                objectNode.put("province", resultSet.getString("province"));
+            }
+            log.printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            log.printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
 }

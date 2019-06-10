@@ -50,4 +50,28 @@ public class ListController {
         return objectNode;
     }
 
+    @GetMapping("/listed")
+    public ObjectNode queryListedCompanyList(HttpServletRequest httpServletRequest,
+                                             @RequestParam(value = "name") String name) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select id, full_name from comp_info where full_name ~* '" + name + "' order by id asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("id", resultSet.getInt("id"));
+                tempObjectNode.put("name", resultSet.getString("full_name"));
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("company", arrayNode);
+            log.printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            log.printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
 }

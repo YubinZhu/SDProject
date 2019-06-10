@@ -70,4 +70,44 @@ public class HeatmapController {
         return objectNode;
     }
 
+    @GetMapping("/listed")
+    public ObjectNode queryListedCompanyHeatmap(HttpServletRequest httpServletRequest) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select lon, lat from comp_info";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            int heatmapPrecision = 4;
+            HashMap<String, Integer> hashMap = new HashMap<>();
+            while (resultSet.next()) {
+                String lon = String.valueOf(resultSet.getDouble("lon"));
+                String lat = String.valueOf(resultSet.getDouble("lat"));
+                String index = lon.split("\\.")[0] + "." + lon.split("\\.")[1].concat("0000").substring(0, heatmapPrecision) + "," + lat.split("\\.")[0] + "." + lat.split("\\.")[1].concat("0000").substring(0, heatmapPrecision);
+                hashMap.putIfAbsent(index, 0);
+                hashMap.put(index, hashMap.get(index) + 1);
+            }
+            objectNode.put("type", "FeatureCollection");
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            for (String string : hashMap.keySet()) {
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("type", "Feature");
+                tempObjectNode.put("weight", hashMap.get(string));
+                ObjectNode insideObjectNode = objectMapper.createObjectNode();
+                insideObjectNode.put("type", "Point");
+                ArrayNode insideArrayNode = objectMapper.createArrayNode();
+                insideArrayNode.add(Double.parseDouble(string.split(",")[0]));
+                insideArrayNode.add(Double.parseDouble(string.split(",")[1]));
+                insideObjectNode.set("coordinates", insideArrayNode);
+                tempObjectNode.set("geometry", insideObjectNode);
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("features", arrayNode);
+            log.printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            log.printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
 }

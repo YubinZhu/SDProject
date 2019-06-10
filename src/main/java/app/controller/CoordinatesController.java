@@ -67,4 +67,34 @@ public class CoordinatesController {
         return objectNode;
     }
 
+    @GetMapping("/listed")
+    public ObjectNode queryListedCompanyCoordinates(HttpServletRequest httpServletRequest) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select id, lon, lat from comp_info order by id asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                ObjectNode featureObjectNode = objectMapper.createObjectNode();
+                featureObjectNode.put("type", "Feature");
+                featureObjectNode.put("id", resultSet.getInt("id"));
+                ObjectNode geometryObjectNode = objectMapper.createObjectNode();
+                geometryObjectNode.put("type", "Point");
+                ArrayNode coordArrayNode = objectMapper.createArrayNode();
+                coordArrayNode.add(resultSet.getDouble("lon"));
+                coordArrayNode.add(resultSet.getDouble("lat"));
+                geometryObjectNode.set("coordinates", coordArrayNode);
+                featureObjectNode.set("geometry", geometryObjectNode);
+                arrayNode.add(featureObjectNode);
+            }
+            objectNode.set("features", arrayNode);
+            log.printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            log.printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
 }
