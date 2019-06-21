@@ -56,4 +56,24 @@ public class CategoryController {
         return objectNode;
     }
 
+    @GetMapping("/listed")
+    public ObjectNode queryListedCompanyCategory(HttpServletRequest httpServletRequest) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        try {
+            String sqlSentence = "select distinct(industry_type) from comp_info where industry_type is not null order by industry_type asc";
+            ResultSet resultSet = QueryTableService.query(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                arrayNode.add(resultSet.getString("industry_type"));
+            }
+            objectNode.set("ent_label", arrayNode);
+            log.printQueryOkInfo(httpServletRequest);
+        } catch (ClassNotFoundException | SQLException e) {
+            log.printExceptionOccurredWarning(httpServletRequest, e);
+            objectNode.removeAll();
+            objectNode.put("exception", e.getClass().getSimpleName());
+        }
+        return objectNode;
+    }
+
 }

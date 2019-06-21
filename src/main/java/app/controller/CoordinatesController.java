@@ -68,10 +68,15 @@ public class CoordinatesController {
     }
 
     @GetMapping("/listed")
-    public ObjectNode queryListedCompanyCoordinates(HttpServletRequest httpServletRequest) {
+    public ObjectNode queryListedCompanyCoordinates(HttpServletRequest httpServletRequest,
+                                                    @RequestParam(required = false, value = "type") String type) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
-            String sqlSentence = "select id, lon, lat from comp_info order by id asc";
+            String sqlSentence = "select id, lon, lat from comp_info";
+            if (type != null) {
+                sqlSentence += " where industry_type = '" + type + "'";
+            }
+            sqlSentence += " order by id asc";
             ResultSet resultSet = QueryTableService.query(sqlSentence);
             ArrayNode arrayNode = objectMapper.createArrayNode();
             while (resultSet.next()) {
