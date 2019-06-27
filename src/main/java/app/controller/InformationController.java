@@ -61,6 +61,7 @@ public class InformationController {
                 objectNode.put("name", resultSet.getString("full_name"));
                 objectNode.put("lon", resultSet.getDouble("lon"));
                 objectNode.put("lat", resultSet.getDouble("lat"));
+                objectNode.put("industry_type", resultSet.getString("industry_type"));
                 objectNode.put("location", resultSet.getString("location"));
                 objectNode.put("website", resultSet.getString("website"));;
                 objectNode.put("province", resultSet.getString("province"));

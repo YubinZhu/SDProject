@@ -72,7 +72,7 @@ public class CoordinatesController {
                                                     @RequestParam(required = false, value = "type") String type) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
-            String sqlSentence = "select id, lon, lat from comp_info";
+            String sqlSentence = "select id, lon, lat, industry_type from comp_info";
             if (type != null) {
                 sqlSentence += " where industry_type = '" + type + "'";
             }
@@ -83,6 +83,7 @@ public class CoordinatesController {
                 ObjectNode featureObjectNode = objectMapper.createObjectNode();
                 featureObjectNode.put("type", "Feature");
                 featureObjectNode.put("id", resultSet.getInt("id"));
+                featureObjectNode.put("company_type", resultSet.getString("industry_type"));
                 ObjectNode geometryObjectNode = objectMapper.createObjectNode();
                 geometryObjectNode.put("type", "Point");
                 ArrayNode coordArrayNode = objectMapper.createArrayNode();
