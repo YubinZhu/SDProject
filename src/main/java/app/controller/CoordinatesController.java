@@ -69,12 +69,23 @@ public class CoordinatesController {
 
     @GetMapping("/listed")
     public ObjectNode queryListedCompanyCoordinates(HttpServletRequest httpServletRequest,
-                                                    @RequestParam(required = false, value = "type") String type) {
+                                                    @RequestParam(required = false, value = "type") String type,
+                                                    @RequestParam(required = false, value = "province") String province,
+                                                    @RequestParam(required = false, value = "city") String city) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
             String sqlSentence = "select id, lon, lat, industry_type from comp_info";
-            if (type != null) {
-                sqlSentence += " where industry_type = '" + type + "'";
+            if (type != null || province != null || city != null) {
+                sqlSentence += " where id is not null"; // in order to use 'and'
+                if (type != null) {
+                    sqlSentence += " and industry_type = '" + type + "'";
+                }
+                if (province != null) {
+                    sqlSentence += " and province = '" + province + "'";
+                }
+                if (city != null) {
+                    sqlSentence += " and city = '" + city + "'";
+                }
             }
             sqlSentence += " order by id asc";
             ResultSet resultSet = QueryTableService.query(sqlSentence);

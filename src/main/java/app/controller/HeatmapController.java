@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.ResultSet;
@@ -71,10 +68,25 @@ public class HeatmapController {
     }
 
     @GetMapping("/listed")
-    public ObjectNode queryListedCompanyHeatmap(HttpServletRequest httpServletRequest) {
+    public ObjectNode queryListedCompanyHeatmap(HttpServletRequest httpServletRequest,
+                                                @RequestParam(required = false, value = "type") String type,
+                                                @RequestParam(required = false, value = "province") String province,
+                                                @RequestParam(required = false, value = "city") String city) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         try {
-            String sqlSentence = "select lon, lat from comp_info";
+            String sqlSentence = "select lon, lat from comp_info"; // in order to use 'and'
+            if (type != null || province != null || city != null) {
+                sqlSentence += " where id is not null";
+                if (type != null) {
+                    sqlSentence += " and industry_type = '" + type + "'";
+                }
+                if (province != null) {
+                    sqlSentence += " and province = '" + province + "'";
+                }
+                if (city != null) {
+                    sqlSentence += " and city = '" + city + "'";
+                }
+            }
             ResultSet resultSet = QueryTableService.query(sqlSentence);
             int heatmapPrecision = 4;
             HashMap<String, Integer> hashMap = new HashMap<>();

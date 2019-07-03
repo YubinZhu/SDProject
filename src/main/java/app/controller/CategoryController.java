@@ -66,9 +66,23 @@ public class CategoryController {
             while (resultSet.next()) {
                 arrayNode.add(resultSet.getString("industry_type"));
             }
-            objectNode.set("ent_label", arrayNode);
+            objectNode.set("type", arrayNode);
+            sqlSentence = "select distinct(province) from comp_info where province is not null order by province asc";
+            resultSet = QueryTableService.query(sqlSentence);
+            ObjectNode tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                sqlSentence = "select distinct(city) from comp_info where city is not null and province = '" + resultSet.getString("province") + "' order by city asc";
+                ResultSet tempResultSet = QueryTableService.query(sqlSentence);
+                arrayNode = objectMapper.createArrayNode();
+                while (tempResultSet.next()) {
+                    arrayNode.add(tempResultSet.getString("city"));
+                }
+                tempObjectNode.set(resultSet.getString("province"), arrayNode);
+            }
+            objectNode.set("province", tempObjectNode);
             log.printQueryOkInfo(httpServletRequest);
         } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
             log.printExceptionOccurredWarning(httpServletRequest, e);
             objectNode.removeAll();
             objectNode.put("exception", e.getClass().getSimpleName());
