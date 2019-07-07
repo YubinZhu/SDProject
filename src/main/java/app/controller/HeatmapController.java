@@ -23,9 +23,9 @@ import java.util.HashMap;
 public class HeatmapController {
 
     @Autowired
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static LogService log = new LogService(HeatmapController.class);
+    private static final LogService log = new LogService(HeatmapController.class);
 
     @GetMapping("/qingdao")
     public ObjectNode queryQingDaoCompanyHeatmap(HttpServletRequest httpServletRequest) {

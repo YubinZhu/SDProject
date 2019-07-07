@@ -22,9 +22,9 @@ import java.sql.SQLException;
 public class CoordinatesController {
 
     @Autowired
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static LogService log = new LogService(CoordinatesController.class);
+    private static final LogService log = new LogService(CoordinatesController.class);
 
     @GetMapping("/qingdao")
     public ObjectNode queryQingDaoCompanyCoordinates(HttpServletRequest httpServletRequest,

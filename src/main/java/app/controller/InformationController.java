@@ -21,9 +21,9 @@ import java.sql.SQLException;
 public class InformationController {
 
     @Autowired
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static LogService log = new LogService(InformationController.class);
+    private static final LogService log = new LogService(InformationController.class);
 
     @GetMapping("/qingdao")
     public ObjectNode queryQingDaoCompanyInformation(HttpServletRequest httpServletRequest,

@@ -25,9 +25,9 @@ import java.sql.SQLException;
 public class CategoryController {
 
     @Autowired
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static LogService log = new LogService(CategoryController.class);
+    private static final LogService log = new LogService(CategoryController.class);
 
     @GetMapping("/qingdao")
     public ObjectNode queryQingDaoCompanyCategory(HttpServletRequest httpServletRequest) {

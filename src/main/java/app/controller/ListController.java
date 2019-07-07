@@ -22,9 +22,9 @@ import java.sql.SQLException;
 public class ListController {
 
     @Autowired
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static LogService log = new LogService(ListController.class);
+    private static final LogService log = new LogService(ListController.class);
 
     @GetMapping("/qingdao")
     public ObjectNode queryQingDaoCompanyList(HttpServletRequest httpServletRequest,
