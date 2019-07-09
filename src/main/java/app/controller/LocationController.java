@@ -28,7 +28,7 @@ public class LocationController {
     public ObjectNode queryLocation(HttpServletRequest httpServletRequest,
                                     @RequestParam(value = "address") String address) {
         ObjectNode objectNode = objectMapper.createObjectNode();
-        String location = getLocation(address);
+        String location = getLocation(address); // "{lon},{lat}"
         if (location == null) {
             return null;
         }

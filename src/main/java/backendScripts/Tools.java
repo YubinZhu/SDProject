@@ -59,7 +59,6 @@ public class Tools {
         Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
         Statement statement = connection.createStatement();
         boolean result = statement.execute(sqlSentence);
-        // System.out.println(result + " for execute {" + sqlSentence + "}");
         connection.close(); // very important
         return result;
     }
