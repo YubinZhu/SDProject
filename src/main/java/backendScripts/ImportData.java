@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,17 +18,18 @@ public class ImportData {
 
     public static void main(String[] args) {
         try {
-            createListedCompanyTable();
-            importListedCompanyData();
+            // createListedCompanyTable();
+            // importListedCompanyData();
+            addListedCompanyTypeField();
         } catch (ClassNotFoundException | SQLException | IOException e) {
             e.printStackTrace();
         }
     }
 
     private static void createListedCompanyTable() throws ClassNotFoundException, SQLException {
-        Tools.execute("drop table if exists listed_company");
-        Tools.execute("create table listed_company (id serial primary key, sec_code char(16), sec_abbr_name char(16), com_chn_name char(32), " +
-                "province char(16), website char(64), address char(128), employee_num int, city char(16), " +
+        Tools.executeUpdate("drop table if exists listed_company");
+        Tools.executeUpdate("create table listed_company (id serial primary key, sec_code varchar(16), sec_abbr_name varchar(16), com_chn_name varchar(32), " +
+                "province varchar(16), website varchar(64), address varchar(128), employee_num int, city varchar(16), " +
                 "income_2018 float4, income_2017 float4, income_2016 float4, income_2015 float4, income_2014 float4, " +
                 "income_rate_2018 float4, income_rate_2017 float4, income_rate_2016 float4, income_rate_2015 float4, income_rate_2014 float4, " +
                 "rsh_cost_2018 float4, rsh_cost_2017 float4, rsh_cost_2016 float4, rsh_cost_2015 float4, rsh_cost_2014 float4, " +
@@ -38,7 +40,7 @@ public class ImportData {
                 "profit_2018 float4, profit_2017 float4, profit_2016 float4, profit_2015 float4, profit_2014 float4, " +
                 "to_ratio_2018 float4, to_ratio_2017 float4, to_ratio_2016 float4, to_ratio_2015 float4, to_ratio_2014 float4, " +
                 "total_value bigint, remission_2018 float4, remission_2017 float4, remission_2016 float4, remission_2015 float4, remission_2014 float4, " +
-                "board_type char(8), bachelor_num int, master_num int, doctor_num int, lon float4, lat float4)");
+                "board_type varchar(8), bachelor_num int, master_num int, doctor_num int, lon float4, lat float4)");
     }
 
     private static void importListedCompanyData() throws IOException, ClassNotFoundException, SQLException {
@@ -88,8 +90,30 @@ public class ImportData {
                         row.getCell(61).toString() + ", " + row.getCell(62).toString() + ", " + row.getCell(63).toString() + ", " +
                         location.split(",")[0].split("\"")[1] + ", " + location.split(",")[1].split("\"")[0] + ")";
                 sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,");
-                System.out.println("#" + i + "-" + j + ": " + sqlSentence);
-                Tools.execute(sqlSentence);
+                System.out.println("#" + i + "-" + j + "-" + Tools.executeUpdate(sqlSentence) + ": " + sqlSentence);
+            }
+        }
+        workbook.close();
+    }
+
+    private static void addListedCompanyTypeField() throws IOException, ClassNotFoundException, SQLException {
+        Tools.executeUpdate("alter table listed_company drop column if exists industrial_type");
+        Tools.executeUpdate("alter table listed_company add industrial_type varchar(16)");
+        Workbook workbook = WorkbookFactory.create(new File("misc/产业类型.xlsx"));
+        for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
+            Sheet sheet = workbook.getSheetAt(i);
+            for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
+                Row row = sheet.getRow(j);
+                if (row.getCell(1) != null) {
+                    Tools.executeUpdate("update listed_company set industrial_type = '" + row.getCell(0) +
+                            "' where sec_code = '" + row.getCell(1) + "' and industrial_type is null");
+                } else if (row.getCell(2) != null) {
+                    Tools.executeUpdate("update listed_company set industrial_type = '" + row.getCell(0) +
+                            "' where sec_abbr_name = '" + row.getCell(2) + "' and industrial_type is null");
+                } else if (row.getCell(3) != null) {
+                    Tools.executeUpdate("update listed_company set industrial_type = '" + row.getCell(0) +
+                            "' where website = '" + row.getCell(3) + "' and industrial_type is null");
+                }
             }
         }
     }

@@ -54,11 +54,11 @@ public class Tools {
 
     private static final String password = "";
 
-    static boolean execute(String sqlSentence) throws ClassNotFoundException, SQLException {
+    static int executeUpdate(String sqlSentence) throws ClassNotFoundException, SQLException {
         Class.forName(driver);
         Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
         Statement statement = connection.createStatement();
-        boolean result = statement.execute(sqlSentence);
+        int result = statement.executeUpdate(sqlSentence);
         connection.close(); // very important
         return result;
     }
