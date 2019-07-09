@@ -11,7 +11,7 @@ import java.sql.*;
  * Created by yubzhu on 2019/7/5
  */
 
-class Tools {
+public class Tools {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -23,7 +23,7 @@ class Tools {
 
     private static final boolean batch = false;
 
-    static String getLocation(String string) {
+    public static String getLocation(String string) {
         try {
             URL url = new URL(address + "?address=" + string.replace("#", "号") +"&key=" + key + "&batch=" + batch);
             ObjectNode objectNode = objectMapper.readValue(url, ObjectNode.class);
