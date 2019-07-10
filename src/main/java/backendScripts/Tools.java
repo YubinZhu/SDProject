@@ -25,16 +25,13 @@ public class Tools {
 
     public static String getLocation(String string) {
         try {
-            URL url = new URL(address + "?address=" + string.replace("#", "号") +"&key=" + key + "&batch=" + batch);
+            URL url = new URL(address + "?address=" + string.replace("#", "号").replace(" ", "") +"&key=" + key + "&batch=" + batch);
             ObjectNode objectNode = objectMapper.readValue(url, ObjectNode.class);
             try {
-                return objectNode.get("geocodes").get(0).get("location").toString();
+                return objectNode.get("geocodes").get(0).get("location").asText();
             } catch (NullPointerException e) {
-                if (objectNode.get("status").toString().equals("0")) {
-                    System.out.println("status 0 at query {" + string + "}");
-                } else if (objectNode.get("count").toString().equals("0")) {
-                    System.out.println("count 0 at query {" + string + "}");
-                }
+                System.out.println("status {" + objectNode.get("status").asText() + "}, info {" + objectNode.get("info").asText() +
+                        "}, count {" + objectNode.get("count").asText() + "} at query {" + string + "}");
             }
         } catch (IOException e) {
             e.printStackTrace();

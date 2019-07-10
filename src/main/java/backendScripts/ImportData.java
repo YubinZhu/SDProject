@@ -25,6 +25,7 @@ public class ImportData {
         } catch (ClassNotFoundException | SQLException | IOException e) {
             e.printStackTrace();
         }
+        System.out.flush();
     }
 
     private static void createListedCompanyTable() throws ClassNotFoundException, SQLException {
@@ -51,7 +52,8 @@ public class ImportData {
             Sheet sheet = workbook.getSheetAt(i);
             for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
                 Row row = sheet.getRow(j);
-                String location = Tools.getLocation(row.getCell(5).toString().replace("#", "号"));
+                System.out.print("#" + i + "-" + j + ": ");
+                String location = Tools.getLocation(row.getCell(5).toString());
                 if (location == null) {
                     continue;
                 }
@@ -89,10 +91,9 @@ public class ImportData {
                         row.getCell(55).toString() + ", " + row.getCell(56).toString() + ", " + row.getCell(57).toString() + ", " +
                         row.getCell(58).toString() + ", " + row.getCell(59).toString() + ", '" + row.getCell(60).toString() + "', " +
                         row.getCell(61).toString() + ", " + row.getCell(62).toString() + ", " + row.getCell(63).toString() + ", " +
-                        location.split(",")[0].split("\"")[1] + ", " + location.split(",")[1].split("\"")[0] + ")";
+                        location.split(",")[0] + ", " + location.split(",")[1] + ")";
                 sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                         .replace(", '',", ", null,").replace(", '',", ", null,");
-                System.out.print("#" + i + "-" + j + ": ");
                 Tools.executeUpdate(sqlSentence);
             }
         }
@@ -125,10 +126,10 @@ public class ImportData {
     private static void createShandongCompanyTable() throws ClassNotFoundException, SQLException {
         Tools.executeUpdate("drop table if exists shandong_company");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
-        Tools.executeUpdate("create table shandong_company(id serial primary key, name varchar(32), lg_psn_name varchar(8), " +
+        Tools.executeUpdate("create table shandong_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
                 "reg_cap varchar(16), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(8), " +
-                "company_type varchar(16), uscc varchar(32), tel varchar(16), tel_more varchar(64), address varchar(128), " +
-                "website varchar(128), email varchar(128), production varchar(1024), lon float4, lat float4)");
+                "company_type varchar(32), uscc varchar(32), tel varchar(32), tel_more varchar(128), address varchar(128), " +
+                "website varchar(512), email varchar(128), production varchar(1024), lon float4, lat float4)");
     }
 
     private static void importShandongCompanyData() throws IOException, ClassNotFoundException, SQLException {
@@ -137,9 +138,10 @@ public class ImportData {
             Workbook workbook = WorkbookFactory.create(new FileInputStream(string));
             for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
                 Sheet sheet = workbook.getSheetAt(i);
-                for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
+                for (int j = 1900; j <= sheet.getLastRowNum(); j += 1) {
                     Row row = sheet.getRow(j);
-                    String location = Tools.getLocation(row.getCell(12).toString().replace("#", "号"));
+                    System.out.print("#" + i + "-" + j + ": ");
+                    String location = Tools.getLocation(row.getCell(12).toString());
                     if (location == null) {
                         continue;
                     }
@@ -150,11 +152,9 @@ public class ImportData {
                             row.getCell(6).toString() + "', '" + row.getCell(7).toString() + "', '" + row.getCell(8).toString() + "', '" +
                             row.getCell(9).toString() + "', '" + row.getCell(10).toString() + "', '" + row.getCell(11).toString() + "', '" +
                             row.getCell(12).toString() + "', '" + row.getCell(13).toString() + "', '" + row.getCell(14).toString() + "', '" +
-                            row.getCell(15).toString() + "', " +
-                            location.split(",")[0].split("\"")[1] + ", " + location.split(",")[1].split("\"")[0] + ")";
+                            row.getCell(15).toString() + "', " + location.split(",")[0] + ", " + location.split(",")[1] + ")";
                     sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                             .replace(", '',", ", null,").replace(", '',", ", null,");
-                    System.out.print("#" + i + "-" + j + ": ");
                     Tools.executeUpdate(sqlSentence);
                 }
             }
