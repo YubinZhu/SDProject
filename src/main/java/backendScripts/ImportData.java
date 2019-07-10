@@ -5,7 +5,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -20,7 +19,9 @@ public class ImportData {
         try {
             // createListedCompanyTable();
             // importListedCompanyData();
-            addListedCompanyTypeField();
+            // addListedCompanyTypeField();
+            createShandongCompanyTable();
+            importShandongCompanyData();
         } catch (ClassNotFoundException | SQLException | IOException e) {
             e.printStackTrace();
         }
@@ -28,7 +29,8 @@ public class ImportData {
 
     private static void createListedCompanyTable() throws ClassNotFoundException, SQLException {
         Tools.executeUpdate("drop table if exists listed_company");
-        Tools.executeUpdate("create table listed_company (id serial primary key, sec_code varchar(16), sec_abbr_name varchar(16), com_chn_name varchar(32), " +
+        /* WARNING: Don't import production description 'cause string format is awful and too long. */
+        Tools.executeUpdate("create table listed_company(id serial primary key, sec_code varchar(16), sec_abbr_name varchar(16), com_chn_name varchar(32), " +
                 "province varchar(16), website varchar(64), address varchar(128), employee_num int, city varchar(16), " +
                 "income_2018 float4, income_2017 float4, income_2016 float4, income_2015 float4, income_2014 float4, " +
                 "income_rate_2018 float4, income_rate_2017 float4, income_rate_2016 float4, income_rate_2015 float4, income_rate_2014 float4, " +
@@ -53,7 +55,6 @@ public class ImportData {
                 if (location == null) {
                     continue;
                 }
-                /* WARNING: Don't import production description 'cause string format is awful and too long. */
                 String sqlSentence = "insert into listed_company(sec_code, sec_abbr_name, com_chn_name, " +
                         "province, website, address, employee_num, city, " +
                         "income_2018, income_2017, income_2016, income_2015, income_2014, " +
@@ -89,8 +90,10 @@ public class ImportData {
                         row.getCell(58).toString() + ", " + row.getCell(59).toString() + ", '" + row.getCell(60).toString() + "', " +
                         row.getCell(61).toString() + ", " + row.getCell(62).toString() + ", " + row.getCell(63).toString() + ", " +
                         location.split(",")[0].split("\"")[1] + ", " + location.split(",")[1].split("\"")[0] + ")";
-                sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,");
-                System.out.println("#" + i + "-" + j + "-" + Tools.executeUpdate(sqlSentence) + ": " + sqlSentence);
+                sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
+                        .replace(", '',", ", null,").replace(", '',", ", null,");
+                System.out.print("#" + i + "-" + j + ": ");
+                Tools.executeUpdate(sqlSentence);
             }
         }
         workbook.close();
@@ -99,7 +102,7 @@ public class ImportData {
     private static void addListedCompanyTypeField() throws IOException, ClassNotFoundException, SQLException {
         Tools.executeUpdate("alter table listed_company drop column if exists industrial_type");
         Tools.executeUpdate("alter table listed_company add industrial_type varchar(16)");
-        Workbook workbook = WorkbookFactory.create(new File("misc/产业类型.xlsx"));
+        Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/产业类型.xlsx"));
         for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
             Sheet sheet = workbook.getSheetAt(i);
             for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
@@ -115,6 +118,47 @@ public class ImportData {
                             "' where website = '" + row.getCell(3) + "' and industrial_type is null");
                 }
             }
+        }
+        workbook.close();
+    }
+
+    private static void createShandongCompanyTable() throws ClassNotFoundException, SQLException {
+        Tools.executeUpdate("drop table if exists shandong_company");
+        /* WARNING: Don't import production description 'cause string format is awful and too long. */
+        Tools.executeUpdate("create table shandong_company(id serial primary key, name varchar(32), lg_psn_name varchar(8), " +
+                "reg_cap varchar(16), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(8), " +
+                "company_type varchar(16), uscc varchar(32), tel varchar(16), tel_more varchar(64), address varchar(128), " +
+                "website varchar(128), email varchar(128), production varchar(1024), lon float4, lat float4)");
+    }
+
+    private static void importShandongCompanyData() throws IOException, ClassNotFoundException, SQLException {
+        String[] strings = {"misc/新一代信息技术合并去掉注资10万以下企业.xlsx", "misc/智能制造合并去掉注资10万以下企业.xlsx", "misc/海洋产业合并去掉注资10万以下企业.xlsx"};
+        for (String string : strings) {
+            Workbook workbook = WorkbookFactory.create(new FileInputStream(string));
+            for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
+                Sheet sheet = workbook.getSheetAt(i);
+                for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
+                    Row row = sheet.getRow(j);
+                    String location = Tools.getLocation(row.getCell(12).toString().replace("#", "号"));
+                    if (location == null) {
+                        continue;
+                    }
+                    String sqlSentence = "insert into shandong_company(name, lg_psn_name, reg_cap, est_date, status, province, " +
+                            "city, county, company_type, uscc, tel, tel_more, address, website, email, production, lon, lat) values('" +
+                            row.getCell(0).toString() + "', '" + row.getCell(1).toString() + "', '" + row.getCell(2).toString() + "', '" +
+                            row.getCell(3).toString() + "', '" + row.getCell(4).toString() + "', '" + row.getCell(5).toString() + "', '" +
+                            row.getCell(6).toString() + "', '" + row.getCell(7).toString() + "', '" + row.getCell(8).toString() + "', '" +
+                            row.getCell(9).toString() + "', '" + row.getCell(10).toString() + "', '" + row.getCell(11).toString() + "', '" +
+                            row.getCell(12).toString() + "', '" + row.getCell(13).toString() + "', '" + row.getCell(14).toString() + "', '" +
+                            row.getCell(15).toString() + "', " +
+                            location.split(",")[0].split("\"")[1] + ", " + location.split(",")[1].split("\"")[0] + ")";
+                    sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
+                            .replace(", '',", ", null,").replace(", '',", ", null,");
+                    System.out.print("#" + i + "-" + j + ": ");
+                    Tools.executeUpdate(sqlSentence);
+                }
+            }
+            workbook.close();
         }
     }
 }
