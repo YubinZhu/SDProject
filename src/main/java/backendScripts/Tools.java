@@ -59,6 +59,7 @@ public class Tools {
         Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
         Statement statement = connection.createStatement();
         int result = statement.executeUpdate(sqlSentence);
+        System.out.println(result + " on {" + sqlSentence + "}");
         connection.close(); // very important
         return result;
     }
