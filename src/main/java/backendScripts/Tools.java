@@ -11,7 +11,7 @@ import java.sql.*;
  * Created by yubzhu on 2019/7/5
  */
 
-public class Tools {
+public class Tools extends Thread {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -23,18 +23,22 @@ public class Tools {
 
     private static final boolean batch = false;
 
-    public static String getLocation(String string) {
-        try {
-            URL url = new URL(address + "?address=" + string.replace("#", "号").replace(" ", "") +"&key=" + key + "&batch=" + batch);
-            ObjectNode objectNode = objectMapper.readValue(url, ObjectNode.class);
+    static String getLocation(String string, String serialString) {
+        if (string == null || string.equals("")) {
+            System.out.println("#" + serialString + ": " + "empty address.");
+        } else {
             try {
-                return objectNode.get("geocodes").get(0).get("location").asText();
-            } catch (NullPointerException e) {
-                System.out.println("status {" + objectNode.get("status").asText() + "}, info {" + objectNode.get("info").asText() +
-                        "}, count {" + objectNode.get("count").asText() + "} at query {" + string + "}");
+                URL url = new URL(address + "?address=" + string.replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
+                ObjectNode objectNode = objectMapper.readValue(url, ObjectNode.class);
+                try {
+                    return objectNode.get("geocodes").get(0).get("location").asText();
+                } catch (NullPointerException e) {
+                    System.out.println("#" + serialString + ": " + "status {" + objectNode.get("status").asText() + "}, info {" +
+                            objectNode.get("info").asText() + "}, count {" + objectNode.get("count").asText() + "} at query {" + string + "}");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return null;
     }
@@ -56,8 +60,25 @@ public class Tools {
         Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
         Statement statement = connection.createStatement();
         int result = statement.executeUpdate(sqlSentence);
-        System.out.println(result + " on {" + sqlSentence + "}");
         connection.close(); // very important
         return result;
+    }
+
+    private String threadSqlSentence;
+
+    private String threadSerialString;
+
+    Tools(String sqlSentence, String serialString) {
+        threadSqlSentence = sqlSentence;
+        threadSerialString = serialString;
+    }
+
+    public void run() {
+        try {
+            int result = executeUpdate(threadSqlSentence);
+            System.out.println("#" + threadSerialString + ": " + result + " on {" + threadSqlSentence + "}");
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
