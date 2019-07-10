@@ -8,12 +8,18 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by yubzhu on 2019/7/7
  */
 
 public class ImportData {
+
+    private static final int MAX_THREADS = 32;
+
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
 
     public static void main(String[] args) {
         try {
@@ -96,8 +102,7 @@ public class ImportData {
                         location.split(",")[0] + ", " + location.split(",")[1] + ")";
                 sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                         .replace(", '',", ", null,").replace(", '',", ", null,");
-                Tools tools = new Tools(sqlSentence, "listed-" + i + "-" + j);
-                tools.start();
+                executorService.submit(new Tools(sqlSentence, "listed-" + i + "-" + j));
             }
         }
         workbook.close();
@@ -124,8 +129,7 @@ public class ImportData {
                     sqlSentence = "update listed_company set industrial_type = '" + row.getCell(0) +
                             "' where website = '" + row.getCell(3) + "' and industrial_type is null";
                 }
-                Tools tools = new Tools(sqlSentence, "listed_add-" + i + "-" + j);
-                tools.start();
+                executorService.submit(new Tools(sqlSentence, "listed_add-" + i + "-" + j));
             }
         }
         workbook.close();
@@ -165,8 +169,7 @@ public class ImportData {
                             row.getCell(15).toString() + "', " + location.split(",")[0] + ", " + location.split(",")[1] + ")";
                     sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                             .replace(", '',", ", null,").replace(", '',", ", null,");
-                    Tools tools = new Tools(sqlSentence, "shandong-" + fileIndex + "-" + i + "-" + j);
-                    tools.start();
+                    executorService.submit(new Tools(sqlSentence, "shandong-" + fileIndex + "-" + i + "-" + j));
                 }
             }
             workbook.close();
