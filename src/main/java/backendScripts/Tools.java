@@ -34,7 +34,7 @@ public class Tools extends Thread {
                 try {
                     return objectNode.get("geocodes").get(0).get("location").asText();
                 } catch (NullPointerException e) {
-                    System.out.println("#" + serialString + ": get location failed.}");
+                    System.out.println("#" + serialString + ": get location failed.");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
