@@ -1,7 +1,7 @@
-package app.exception;
+package oldApp.exception;
 
 /**
- * Created by yubzhu on 19-7-11
+ * Created by yubzhu on 19-5-15
  */
 
 public class ApplicationException extends RuntimeException {

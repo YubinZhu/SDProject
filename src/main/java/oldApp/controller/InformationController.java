@@ -1,7 +1,7 @@
-package app.controller;
+package oldApp.controller;
 
-import app.service.LogService;
-import app.service.QueryTableService;
+import oldApp.service.LogService;
+import oldApp.service.QueryTableService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +63,7 @@ public class InformationController {
                 objectNode.put("lat", resultSet.getDouble("lat"));
                 objectNode.put("industry_type", resultSet.getString("industry_type"));
                 objectNode.put("location", resultSet.getString("location"));
-                objectNode.put("website", resultSet.getString("website"));;
+                objectNode.put("website", resultSet.getString("website"));
                 objectNode.put("province", resultSet.getString("province"));
             }
             log.printQueryOkInfo(httpServletRequest);

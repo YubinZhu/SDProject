@@ -1,4 +1,4 @@
-package app.service;
+package oldApp.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,14 +8,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
 /**
- * Created by yubzhu on 19-7-11
+ * Created by yubzhu on 2019/6/9
  */
 
 public class LogService {
 
     private Logger logger;
 
-    public LogService(Class clazz) {
+    public LogService(Class<?> clazz) {
         logger = LoggerFactory.getLogger(clazz);
     }
 
@@ -27,21 +27,22 @@ public class LogService {
         }
     }
 
-    public void printExecuteOkInfo(HttpServletRequest httpServletRequest) {
+    public void printQueryOkInfo(HttpServletRequest httpServletRequest) {
         try {
             String url = getRequestURL(httpServletRequest);
-            logger.info("At [{}] --- Execute ok.", url);
+            logger.info("At [{}] --- Query ok.", url);
         } catch (UnsupportedEncodingException e) {
             logger.error("FATAL ERROR --- Exception \"{}\" occurred.", UnsupportedEncodingException.class.getName());
         }
     }
 
-    public void printExceptionOccurredError(HttpServletRequest httpServletRequest, Exception exception) {
+    public void printExceptionOccurredWarning(HttpServletRequest httpServletRequest, Exception exception) {
         try {
             String url = getRequestURL(httpServletRequest);
-            logger.error("At [{}] --- Exception \"{}\" occurred.", url, exception.getClass().getName());
+            logger.warn("At [{}] --- Exception \"{}\" occurred.", url, exception.getClass().getName());
         } catch (UnsupportedEncodingException e) {
             logger.error("FATAL ERROR --- Exception \"{}\" occurred.", UnsupportedEncodingException.class.getName());
         }
     }
+
 }

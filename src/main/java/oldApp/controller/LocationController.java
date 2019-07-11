@@ -1,6 +1,6 @@
-package app.controller;
+package oldApp.controller;
 
-import app.service.LogService;
+import oldApp.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
