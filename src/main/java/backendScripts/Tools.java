@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.sql.*;
 
@@ -25,7 +26,7 @@ public class Tools extends Thread {
 
     static String getLocation(String string, String serialString) {
         if (string == null || string.equals("")) {
-            System.out.println("#" + serialString + ": " + "empty address.");
+            System.out.println("#" + serialString + ": empty address.");
         } else {
             try {
                 URL url = new URL(address + "?address=" + string.replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
@@ -33,8 +34,7 @@ public class Tools extends Thread {
                 try {
                     return objectNode.get("geocodes").get(0).get("location").asText();
                 } catch (NullPointerException e) {
-                    System.out.println("#" + serialString + ": " + "status {" + objectNode.get("status").asText() + "}, info {" +
-                            objectNode.get("info").asText() + "}, count {" + objectNode.get("count").asText() + "} at query {" + string + "}");
+                    System.out.println("#" + serialString + ": get location failed.}");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -56,12 +56,20 @@ public class Tools extends Thread {
     private static final String password = "";
 
     static int executeUpdate(String sqlSentence) throws ClassNotFoundException, SQLException {
-        Class.forName(driver);
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
-        Statement statement = connection.createStatement();
-        int result = statement.executeUpdate(sqlSentence);
-        connection.close(); // very important
-        return result;
+        try {
+            Class.forName(driver);
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
+            Statement statement = connection.createStatement();
+            int result = statement.executeUpdate(sqlSentence);
+            connection.close(); // very important
+            return result;
+        } catch (SQLException e) {
+            if (e.getCause() != null && e.getCause().getClass() == SocketTimeoutException.class) {
+                return executeUpdate(sqlSentence);
+            } else {
+                throw e;
+            }
+        }
     }
 
     private String threadSqlSentence;

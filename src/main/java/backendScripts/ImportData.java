@@ -61,7 +61,7 @@ public class ImportData {
             Sheet sheet = workbook.getSheetAt(i);
             for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
                 Row row = sheet.getRow(j);
-                String location = Tools.getLocation(row.getCell(5).toString(), i + "-" + j);
+                String location = Tools.getLocation(row.getCell(5).toString(), "listed-" + i + "-" + j);
                 if (location == null) {
                     continue;
                 }
@@ -141,7 +141,7 @@ public class ImportData {
         System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
         sqlSentence = "create table shandong_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
-                "reg_cap varchar(16), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(8), " +
+                "reg_cap varchar(32), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(16), " +
                 "company_type varchar(32), uscc varchar(32), tel varchar(32), tel_more varchar(128), address varchar(128), " +
                 "website varchar(512), email varchar(128), production varchar(1024), lon float4, lat float4)";
         System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
@@ -155,7 +155,7 @@ public class ImportData {
                 Sheet sheet = workbook.getSheetAt(i);
                 for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
                     Row row = sheet.getRow(j);
-                    String location = Tools.getLocation(row.getCell(12).toString(), fileIndex + "-" + i + "-" + j);
+                    String location = Tools.getLocation(row.getCell(12).toString(), "shandong-" + fileIndex + "-" + i + "-" + j);
                     if (location == null) {
                         continue;
                     }
