@@ -169,9 +169,9 @@ public class ListedCompanyController {
                                    @RequestParam(required = false, value = "city") String city) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select lon, lat from listed_company"; // in order to use 'and'
+            String sqlSentence = "select lon, lat from listed_company";
             if (type != null || province != null || city != null) {
-                sqlSentence += " where id is not null";
+                sqlSentence += " where id is not null"; // in order to use 'and'
                 if (type != null) {
                     sqlSentence += " and industrial_type = '" + type + "'";
                 }
@@ -220,6 +220,44 @@ public class ListedCompanyController {
             objectNode.put("lat", location.split(",")[1]);
             return objectNode;
         } catch (NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/statistic")
+    public ObjectNode queryStatistic(HttpServletRequest httpServletRequest,
+                                     @RequestParam(required = false, value = "type") String type,
+                                     @RequestParam(required = false, value = "province") String province,
+                                     @RequestParam(required = false, value = "city") String city) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select avg(income_2018) as income_2018, avg(income_2017) as income_2017, avg(income_2016) as income_2016," +
+                    " avg(income_2015) as income_2015, avg(income_2014) as income_2014 from listed_company";
+            if (type != null || province != null || city != null) {
+                sqlSentence += " where id is not null"; // in order to use 'and'
+                if (type != null) {
+                    sqlSentence += " and industrial_type = '" + type + "'";
+                }
+                if (province != null) {
+                    sqlSentence += " and province = '" + province + "'";
+                }
+                if (city != null) {
+                    sqlSentence += " and city = '" + city + "'";
+                }
+            }
+            ResultSet resultSet = getResultSet(sqlSentence);
+            if (resultSet.next()) {
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
+                tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
+                tempObjectNode.put("2016", resultSet.getDouble("income_2016"));
+                tempObjectNode.put("2015", resultSet.getDouble("income_2015"));
+                tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
+                objectNode.set("income", tempObjectNode);
+            }
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }

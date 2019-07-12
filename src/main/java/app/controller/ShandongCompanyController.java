@@ -156,7 +156,7 @@ public class ShandongCompanyController {
                                    @RequestParam(required = false, value = "county") String county) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select lon, lat from shandong_company"; // in order to use 'and'
+            String sqlSentence = "select lon, lat from shandong_company";
             if (city != null || county != null) {
                 sqlSentence += " where id is not null"; // in order to use 'and'
                 if (city != null) {
