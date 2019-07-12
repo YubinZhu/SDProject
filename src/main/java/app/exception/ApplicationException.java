@@ -5,6 +5,7 @@ package app.exception;
  */
 
 public class ApplicationException extends RuntimeException {
+
     private static final long serialVersionUID = 1922955215008755603L; //random
 
     public ApplicationException() {
