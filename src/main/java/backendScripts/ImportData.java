@@ -1,5 +1,7 @@
 package backendScripts;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -7,6 +9,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +19,16 @@ import java.util.concurrent.Executors;
  */
 
 public class ImportData {
+
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final String address = "https://restapi.amap.com/v3/geocode/geo";
+
+    private static final String key = "c346ef3fe374bf57803d4eb57aca0fb0";
+
+    private static final String backupKey = "f4edf4d440e4de85a51cb04a37586532";
+
+    private static final boolean batch = false;
 
     private static final int MAX_THREADS = 32;
 
@@ -61,8 +74,15 @@ public class ImportData {
             Sheet sheet = workbook.getSheetAt(i);
             for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
                 Row row = sheet.getRow(j);
-                String location = Tools.getLocation(row.getCell(5).toString(), "listed-" + i + "-" + j);
-                if (location == null) {
+                String location;
+                try {
+                    URL url = new URL(address + "?address=" + row.getCell(5).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
+                    location = objectMapper.readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+                } catch (NullPointerException e) {
+                    System.out.println("#listed-" + i + "-" + j + ": get location failed.");
+                    continue;
+                } catch (IOException e) {
+                    System.out.println("#listed-" + i + "-" + j + ": unknown error.");
                     continue;
                 }
                 String sqlSentence = "insert into listed_company(sec_code, sec_abbr_name, com_chn_name, " +
@@ -155,8 +175,15 @@ public class ImportData {
                 Sheet sheet = workbook.getSheetAt(i);
                 for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
                     Row row = sheet.getRow(j);
-                    String location = Tools.getLocation(row.getCell(12).toString(), "shandong-" + fileIndex + "-" + i + "-" + j);
-                    if (location == null) {
+                    String location;
+                    try {
+                        URL url = new URL(address + "?address=" + row.getCell(12).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
+                        location = objectMapper.readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+                    } catch (NullPointerException e) {
+                        System.out.println("#shandong-" + fileIndex + "-" + i + "-" + j + ": get location failed.");
+                        continue;
+                    } catch (IOException e) {
+                        System.out.println("#shandong-" + fileIndex + "-" + i + "-" + j + ": unknown error.");
                         continue;
                     }
                     String sqlSentence = "insert into shandong_company(name, lg_psn_name, reg_cap, est_date, status, province, " +
