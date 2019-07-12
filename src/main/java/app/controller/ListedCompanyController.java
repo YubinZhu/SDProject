@@ -1,6 +1,7 @@
 package app.controller;
 
 import app.service.DatabaseService;
+import app.service.GeoService;
 import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -181,6 +182,7 @@ public class ListedCompanyController {
                     sqlSentence += " and city = '" + city + "'";
                 }
             }
+            sqlSentence += " order by id asc";
             ResultSet resultSet = getResultSet(sqlSentence);
             objectNode.put("type", "FeatureCollection");
             ArrayNode arrayNode = objectMapper.createArrayNode();
@@ -200,6 +202,24 @@ public class ListedCompanyController {
             objectNode.set("features", arrayNode);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/geo")
+    public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
+                               @RequestParam(value = "address") String address) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String location = GeoService.getLocation(address);
+            if (location == null) {
+                throw new NullPointerException();
+            }
+            objectNode.put("lon", location.split(",")[0]);
+            objectNode.put("lat", location.split(",")[1]);
+            return objectNode;
+        } catch (NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
