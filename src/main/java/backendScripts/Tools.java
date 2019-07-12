@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.sql.*;
+import java.util.concurrent.*;
 
 /**
  * Created by yubzhu on 2019/7/5
@@ -37,7 +37,7 @@ public class Tools extends Thread {
                     System.out.println("#" + serialString + ": get location failed.");
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("#" + serialString + ": unknown error.");
             }
         }
         return null;
@@ -56,20 +56,12 @@ public class Tools extends Thread {
     private static final String password = "";
 
     static int executeUpdate(String sqlSentence) throws ClassNotFoundException, SQLException {
-        try {
-            Class.forName(driver);
-            Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
-            Statement statement = connection.createStatement();
-            int result = statement.executeUpdate(sqlSentence);
-            connection.close(); // very important
-            return result;
-        } catch (SQLException e) {
-            if (e.getCause() != null && e.getCause().getClass() == SocketTimeoutException.class) {
-                return executeUpdate(sqlSentence);
-            } else {
-                throw e;
-            }
-        }
+        Class.forName(driver);
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
+        Statement statement = connection.createStatement();
+        int result = statement.executeUpdate(sqlSentence);
+        connection.close(); // very important
+        return result;
     }
 
     private String threadSqlSentence;
@@ -81,13 +73,30 @@ public class Tools extends Thread {
         threadSerialString = serialString;
     }
 
+    class UpdateExecutor implements Callable<Integer> {
+        private String sqlSentence;
+
+        UpdateExecutor(String sqlSentence) {
+            this.sqlSentence = sqlSentence;
+        }
+
+        @Override
+        public Integer call() {
+            try {
+                return executeUpdate(sqlSentence);
+            } catch (ClassNotFoundException | SQLException e) {
+                return null;
+            }
+        }
+    }
+
     @Override
     public void run() {
         try {
-            int result = executeUpdate(threadSqlSentence);
+            int result = Executors.newFixedThreadPool(1).submit(new UpdateExecutor(threadSqlSentence)).get(1, TimeUnit.MINUTES);
             System.out.println("#" + threadSerialString + ": " + result + " on {" + threadSqlSentence + "}");
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            System.out.println("#" + threadSerialString + ": execute update failed.");
         }
     }
 }
