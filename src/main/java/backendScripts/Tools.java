@@ -58,11 +58,13 @@ public class Tools extends Thread {
 
     @Override
     public void run() {
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         try {
-            int result = Executors.newFixedThreadPool(1).submit(new UpdateExecutor(threadSqlSentence)).get(1, TimeUnit.MINUTES);
+            int result = executorService.submit(new UpdateExecutor(threadSqlSentence)).get(1, TimeUnit.MINUTES);
             System.out.println("#" + threadSerialString + ": " + result + " on {" + threadSqlSentence + "}");
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             System.out.println("#" + threadSerialString + ": execute update failed.");
         }
+        executorService.shutdown();
     }
 }

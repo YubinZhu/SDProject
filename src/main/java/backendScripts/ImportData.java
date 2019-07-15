@@ -20,8 +20,6 @@ import java.util.concurrent.Executors;
 
 public class ImportData {
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
-
     private static final String address = "https://restapi.amap.com/v3/geocode/geo";
 
     private static final String key = "c346ef3fe374bf57803d4eb57aca0fb0";
@@ -29,10 +27,6 @@ public class ImportData {
     private static final String backupKey = "f4edf4d440e4de85a51cb04a37586532";
 
     private static final boolean batch = false;
-
-    private static final int MAX_THREADS = 32;
-
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
 
     public static void main(String[] args) {
         try {
@@ -77,7 +71,7 @@ public class ImportData {
                 String location;
                 try {
                     URL url = new URL(address + "?address=" + row.getCell(5).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
-                    location = objectMapper.readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+                    location = new ObjectMapper().readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
                 } catch (NullPointerException e) {
                     System.out.println("#listed-" + i + "-" + j + ": get location failed.");
                     continue;
@@ -122,7 +116,9 @@ public class ImportData {
                         location.split(",")[0] + ", " + location.split(",")[1] + ")";
                 sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                         .replace(", '',", ", null,").replace(", '',", ", null,");
+                ExecutorService executorService = Executors.newSingleThreadExecutor();
                 executorService.submit(new Tools(sqlSentence, "listed-" + i + "-" + j));
+                executorService.shutdown();
             }
         }
         workbook.close();
@@ -149,7 +145,9 @@ public class ImportData {
                     sqlSentence = "update listed_company set industrial_type = '" + row.getCell(0) +
                             "' where website = '" + row.getCell(3) + "' and industrial_type is null";
                 }
+                ExecutorService executorService = Executors.newSingleThreadExecutor();
                 executorService.submit(new Tools(sqlSentence, "listed_add-" + i + "-" + j));
+                executorService.shutdown();
             }
         }
         workbook.close();
@@ -178,7 +176,7 @@ public class ImportData {
                     String location;
                     try {
                         URL url = new URL(address + "?address=" + row.getCell(12).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
-                        location = objectMapper.readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+                        location = new ObjectMapper().readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
                     } catch (NullPointerException e) {
                         System.out.println("#shandong-" + fileIndex + "-" + i + "-" + j + ": get location failed.");
                         continue;
@@ -196,7 +194,9 @@ public class ImportData {
                             row.getCell(15).toString() + "', " + location.split(",")[0] + ", " + location.split(",")[1] + ")";
                     sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                             .replace(", '',", ", null,").replace(", '',", ", null,");
+                    ExecutorService executorService = Executors.newSingleThreadExecutor();
                     executorService.submit(new Tools(sqlSentence, "shandong-" + fileIndex + "-" + i + "-" + j));
+                    executorService.shutdown();
                 }
             }
             workbook.close();
