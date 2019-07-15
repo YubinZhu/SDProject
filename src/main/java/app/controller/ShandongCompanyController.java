@@ -12,8 +12,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static app.configure.ApplicationConfigure.timeoutInterval;
+import static app.configure.ApplicationConfigure.timeoutTimeUnit;
 
 /**
  * Created by yubzhu on 2019/7/12
@@ -29,10 +31,8 @@ public class ShandongCompanyController {
 
     private static final LogService log = new LogService(ShandongCompanyController.class);
 
-    private static final long timeout = 1;
-
     private static ResultSet getResultSet(String sqlSentence) throws InterruptedException, ExecutionException, TimeoutException {
-        return new DatabaseService().executeQuery(sqlSentence).get(timeout, TimeUnit.MINUTES);
+        return new DatabaseService().executeQuery(sqlSentence).get(timeoutInterval, timeoutTimeUnit);
     }
 
     @GetMapping("/category")

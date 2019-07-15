@@ -8,27 +8,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static app.configure.ApplicationConfigure.*;
+
 /**
  * Created by yubzhu on 19-7-11
  */
 
 public class DatabaseService {
 
-    private static final String driver = "org.postgresql.Driver";
-
-    private static final String ip = "100.64.137.141";
-
-    private static final String port = "5432";
-
-    private static final String database = "sdproject";
-
-    private static final String user = "postgres";
-
-    private static final String password = "";
-
-    private static final int MAX_THREADS = 32;
-
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(max_threads);
 
     public Future<Integer> executeUpdate(String sqlSentence) {
         return executorService.submit(new UpdateExecutor(sqlSentence));

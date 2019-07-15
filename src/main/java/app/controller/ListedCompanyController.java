@@ -13,8 +13,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static app.configure.ApplicationConfigure.timeoutInterval;
+import static app.configure.ApplicationConfigure.timeoutTimeUnit;
 
 /**
  * Created by yubzhu on 19-7-11
@@ -30,10 +32,8 @@ public class ListedCompanyController {
 
     private static final LogService log = new LogService(ListedCompanyController.class);
 
-    private static final long timeout = 1;
-
     private static ResultSet getResultSet(String sqlSentence) throws InterruptedException, ExecutionException, TimeoutException {
-        return new DatabaseService().executeQuery(sqlSentence).get(timeout, TimeUnit.MINUTES);
+        return new DatabaseService().executeQuery(sqlSentence).get(timeoutInterval, timeoutTimeUnit);
     }
 
     @GetMapping("/category")
@@ -153,6 +153,13 @@ public class ListedCompanyController {
                 objectNode.put("address", resultSet.getString("address"));
                 objectNode.put("website", resultSet.getString("website"));
                 objectNode.put("province", resultSet.getString("province"));
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
+                tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
+                tempObjectNode.put("2016", resultSet.getDouble("income_2016"));
+                tempObjectNode.put("2015", resultSet.getDouble("income_2015"));
+                tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
+                objectNode.set("income", tempObjectNode);
             }
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
@@ -256,6 +263,38 @@ public class ListedCompanyController {
                 tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
                 objectNode.set("income", tempObjectNode);
             }
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/all")
+    public ObjectNode queryAll(HttpServletRequest httpServletRequest,
+                               @RequestParam(required = false, value = "limit") String limit,
+                               @RequestParam(required = false, value = "offset") String offset) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence;
+            if (limit == null || offset == null) {
+                sqlSentence = "select * from listed_company order by id asc";
+            } else {
+                sqlSentence = "select id, com_chn_name, (bachelor_num + master_num + doctor_num) as employee_num, address, " +
+                        "(income_2018 + income_2017 + income_2016 + income_2015 + income_2014) as income from listed_company order by id asc limit " + limit + " offset " + offset;
+            }
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("id", resultSet.getInt("id"));
+                tempObjectNode.put("name", resultSet.getString("com_chn_name"));
+                tempObjectNode.put("employee", resultSet.getInt("employee_num"));
+                tempObjectNode.put("address", resultSet.getString("address"));
+                tempObjectNode.put("income", resultSet.getDouble("income"));
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("all" ,arrayNode);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);

@@ -1,9 +1,39 @@
 package app.configure;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by yubzhu on 19-7-11
  */
 
-// todo: move all configure parameters to here.
 public class ApplicationConfigure {
+
+    /* for controller */
+    public static final int timeoutInterval = 15;
+
+    public static final TimeUnit timeoutTimeUnit = TimeUnit.SECONDS;
+
+    /* for database service */
+    public static final String driver = "org.postgresql.Driver";
+
+    public static final String ip = "100.64.137.141";
+
+    public static final String port = "5432";
+
+    public static final String database = "sdproject";
+
+    public static final String user = "postgres";
+
+    public static final String password = "";
+
+    public static final int max_threads = 32;
+
+    /* for geo service */
+    public static final String address = "https://restapi.amap.com/v3/geocode/geo";
+
+    public static final String key = "c346ef3fe374bf57803d4eb57aca0fb0";
+
+    public static final String backupKey = "f4edf4d440e4de85a51cb04a37586532";
+
+    public static final boolean batch = false;
 }
