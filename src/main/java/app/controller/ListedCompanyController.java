@@ -1,5 +1,6 @@
 package app.controller;
 
+import app.exception.IllegalParameterException;
 import app.service.DatabaseService;
 import app.service.GeoService;
 import app.service.LogService;
@@ -214,6 +215,7 @@ public class ListedCompanyController {
         }
     }
 
+    // todo: don't work in production env.
     @GetMapping("/geo")
     public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
                                @RequestParam(value = "address") String address) {
@@ -236,35 +238,163 @@ public class ListedCompanyController {
     public ObjectNode queryStatistic(HttpServletRequest httpServletRequest,
                                      @RequestParam(required = false, value = "type") String type,
                                      @RequestParam(required = false, value = "province") String province,
-                                     @RequestParam(required = false, value = "city") String city) {
+                                     @RequestParam(required = false, value = "city") String city,
+                                     @RequestParam(required = false, value = "agg", defaultValue = "avg") String agg,
+                                     @RequestParam(required = false, value = "histogram", defaultValue = "false") String histogram) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select avg(income_2018) as income_2018, avg(income_2017) as income_2017, avg(income_2016) as income_2016," +
-                    " avg(income_2015) as income_2015, avg(income_2014) as income_2014 from listed_company";
-            if (type != null || province != null || city != null) {
-                sqlSentence += " where id is not null"; // in order to use 'and'
-                if (type != null) {
-                    sqlSentence += " and industrial_type = '" + type + "'";
-                }
-                if (province != null) {
-                    sqlSentence += " and province = '" + province + "'";
-                }
-                if (city != null) {
-                    sqlSentence += " and city = '" + city + "'";
-                }
+            if (!(agg.equals("avg") || agg.equals("max") || agg.equals("min"))) {
+                throw new IllegalParameterException();
             }
-            ResultSet resultSet = getResultSet(sqlSentence);
-            if (resultSet.next()) {
-                ObjectNode tempObjectNode = objectMapper.createObjectNode();
-                tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
-                tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
-                tempObjectNode.put("2016", resultSet.getDouble("income_2016"));
-                tempObjectNode.put("2015", resultSet.getDouble("income_2015"));
-                tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
-                objectNode.set("income", tempObjectNode);
+            if (!(histogram.equals("false") || histogram.equals("true"))) {
+                throw new IllegalParameterException();
+            }
+            if (histogram.equals("true")) {
+                if (type != null) {
+                    throw new IllegalParameterException();
+                }
+                String sqlSentence = "select " + agg + "(income_2018) as income_2018, " + agg + "(income_2017) as income_2017, " +
+                        agg + "(income_2016) as income_2016, " + agg + "(income_2015) as income_2015, " + agg + "(income_2014) as income_2014, " +
+                        agg + "(rsh_cost_2018) as rsh_cost_2018, " + agg + "(rsh_cost_2017) as rsh_cost_2017, " +
+                        agg + "(rsh_cost_2016) as rsh_cost_2016, " + agg + "(rsh_cost_2015) as rsh_cost_2015, " + agg + "(rsh_cost_2014) as rsh_cost_2014, " +
+                        agg + "(gov_sub_2018) as gov_sub_2018, " + agg + "(gov_sub_2017) as gov_sub_2017, " +
+                        agg + "(gov_sub_2016) as gov_sub_2016, " + agg + "(gov_sub_2015) as gov_sub_2015, " + agg + "(gov_sub_2014) as gov_sub_2014, " +
+                        agg + "(tax_2018) as tax_2018, " + agg + "(tax_2017) as tax_2017, " +
+                        agg + "(tax_2016) as tax_2016, " + agg + "(tax_2015) as tax_2015, " + agg + "(tax_2014) as tax_2014, " +
+                        agg + "(profit_2018) as profit_2018, " + agg + "(profit_2017) as profit_2017, " +
+                        agg + "(profit_2016) as profit_2016, " + agg + "(profit_2015) as profit_2015, " + agg + "(profit_2014) as profit_2014, " +
+                        agg + "(total_2018) as total_2018, " + agg + "(total_2017) as total_2017, " +
+                        agg + "(total_2016) as total_2016, " + agg + "(total_2015) as total_2015, " + agg + "(total_2014) as total_2014, industrial_type from listed_company";
+                if (province != null || city != null) {
+                    sqlSentence += " where id is not null"; // in order to use 'and'
+                    if (province != null) {
+                        sqlSentence += " and province = '" + province + "'";
+                    }
+                    if (city != null) {
+                        sqlSentence += " and city = '" + city + "'";
+                    }
+                }
+                sqlSentence += " group by industrial_type order by income_2018 des limit 3";
+                ResultSet resultSet = getResultSet(sqlSentence);
+                while (resultSet.next()) {
+                    ObjectNode typeObjectNode = objectMapper.createObjectNode();
+                    ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("income_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("income_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
+                    typeObjectNode.set("income", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("rsh_cost_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("rsh_cost_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("rsh_cost_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("rsh_cost_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("rsh_cost_2014"));
+                    typeObjectNode.set("rsh_cost", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("gov_sub_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("gov_sub_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("gov_sub_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("gov_sub_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("gov_sub_2014"));
+                    typeObjectNode.set("gov_sub", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("tax_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("tax_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("tax_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("tax_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("tax_2014"));
+                    typeObjectNode.set("tax", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("profit_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("profit_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("profit_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("profit_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("profit_2014"));
+                    typeObjectNode.set("profit", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("total_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("total_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("total_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("total_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("total_2014"));
+                    typeObjectNode.set("total", tempObjectNode);
+                    objectNode.set(resultSet.getString("industrial_type"), typeObjectNode);
+                }
+            } else {
+                String sqlSentence = "select " + agg + "(income_2018) as income_2018, " + agg + "(income_2017) as income_2017, " +
+                        agg + "(income_2016) as income_2016, " + agg + "(income_2015) as income_2015, " + agg + "(income_2014) as income_2014, " +
+                        agg + "(rsh_cost_2018) as rsh_cost_2018, " + agg + "(rsh_cost_2017) as rsh_cost_2017, " +
+                        agg + "(rsh_cost_2016) as rsh_cost_2016, " + agg + "(rsh_cost_2015) as rsh_cost_2015, " + agg + "(rsh_cost_2014) as rsh_cost_2014, " +
+                        agg + "(gov_sub_2018) as gov_sub_2018, " + agg + "(gov_sub_2017) as gov_sub_2017, " +
+                        agg + "(gov_sub_2016) as gov_sub_2016, " + agg + "(gov_sub_2015) as gov_sub_2015, " + agg + "(gov_sub_2014) as gov_sub_2014, " +
+                        agg + "(tax_2018) as tax_2018, " + agg + "(tax_2017) as tax_2017, " +
+                        agg + "(tax_2016) as tax_2016, " + agg + "(tax_2015) as tax_2015, " + agg + "(tax_2014) as tax_2014, " +
+                        agg + "(profit_2018) as profit_2018, " + agg + "(profit_2017) as profit_2017, " +
+                        agg + "(profit_2016) as profit_2016, " + agg + "(profit_2015) as profit_2015, " + agg + "(profit_2014) as profit_2014, " +
+                        agg + "(total_2018) as total_2018, " + agg + "(total_2017) as total_2017, " +
+                        agg + "(total_2016) as total_2016, " + agg + "(total_2015) as total_2015, " + agg + "(total_2014) as total_2014 from listed_company";
+                if (type != null || province != null || city != null) {
+                    sqlSentence += " where id is not null"; // in order to use 'and'
+                    if (type != null) {
+                        sqlSentence += " and industrial_type = '" + type + "'";
+                    }
+                    if (province != null) {
+                        sqlSentence += " and province = '" + province + "'";
+                    }
+                    if (city != null) {
+                        sqlSentence += " and city = '" + city + "'";
+                    }
+                }
+                ResultSet resultSet = getResultSet(sqlSentence);
+                if (resultSet.next()) {
+                    ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("income_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("income_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("income_2014"));
+                    objectNode.set("income", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("rsh_cost_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("rsh_cost_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("rsh_cost_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("rsh_cost_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("rsh_cost_2014"));
+                    objectNode.set("rsh_cost", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("gov_sub_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("gov_sub_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("gov_sub_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("gov_sub_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("gov_sub_2014"));
+                    objectNode.set("gov_sub", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("tax_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("tax_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("tax_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("tax_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("tax_2014"));
+                    objectNode.set("tax", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("profit_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("profit_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("profit_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("profit_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("profit_2014"));
+                    objectNode.set("profit", tempObjectNode);
+                    tempObjectNode = objectMapper.createObjectNode();
+                    tempObjectNode.put("2018", resultSet.getDouble("total_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("total_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("total_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("total_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("total_2014"));
+                    objectNode.set("total", tempObjectNode);
+                }
             }
             return objectNode;
-        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException | IllegalParameterException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
