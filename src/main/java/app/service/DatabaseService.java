@@ -16,7 +16,7 @@ import static app.configure.ApplicationConfigure.*;
 
 public class DatabaseService {
 
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(max_threads);
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
 
     public Future<Integer> executeUpdate(String sqlSentence) {
         return executorService.submit(new UpdateExecutor(sqlSentence));
