@@ -263,8 +263,8 @@ public class ListedCompanyController {
                         agg + "(tax_2016) as tax_2016, " + agg + "(tax_2015) as tax_2015, " + agg + "(tax_2014) as tax_2014, " +
                         agg + "(profit_2018) as profit_2018, " + agg + "(profit_2017) as profit_2017, " +
                         agg + "(profit_2016) as profit_2016, " + agg + "(profit_2015) as profit_2015, " + agg + "(profit_2014) as profit_2014, " +
-                        agg + "(total_2018) as total_2018, " + agg + "(total_2017) as total_2017, " +
-                        agg + "(total_2016) as total_2016, " + agg + "(total_2015) as total_2015, " + agg + "(total_2014) as total_2014, industrial_type from listed_company";
+                        agg + "(remission_2018) as remission_2018, " + agg + "(remission_2017) as remission_2017, " +
+                        agg + "(remission_2016) as remission_2016, " + agg + "(remission_2015) as remission_2015, " + agg + "(remission_2014) as remission_2014, industrial_type from listed_company";
                 if (province != null || city != null) {
                     sqlSentence += " where id is not null"; // in order to use 'and'
                     if (province != null) {
@@ -274,7 +274,7 @@ public class ListedCompanyController {
                         sqlSentence += " and city = '" + city + "'";
                     }
                 }
-                sqlSentence += " group by industrial_type order by income_2018 des limit 3";
+                sqlSentence += " group by industrial_type order by income_2018 desc limit 3";
                 ResultSet resultSet = getResultSet(sqlSentence);
                 while (resultSet.next()) {
                     ObjectNode typeObjectNode = objectMapper.createObjectNode();
@@ -314,12 +314,12 @@ public class ListedCompanyController {
                     tempObjectNode.put("2014", resultSet.getDouble("profit_2014"));
                     typeObjectNode.set("profit", tempObjectNode);
                     tempObjectNode = objectMapper.createObjectNode();
-                    tempObjectNode.put("2018", resultSet.getDouble("total_2018"));
-                    tempObjectNode.put("2017", resultSet.getDouble("total_2017"));
-                    tempObjectNode.put("2016", resultSet.getDouble("total_2016"));
-                    tempObjectNode.put("2015", resultSet.getDouble("total_2015"));
-                    tempObjectNode.put("2014", resultSet.getDouble("total_2014"));
-                    typeObjectNode.set("total", tempObjectNode);
+                    tempObjectNode.put("2018", resultSet.getDouble("remission_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("remission_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("remission_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("remission_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("remission_2014"));
+                    typeObjectNode.set("remission", tempObjectNode);
                     objectNode.set(resultSet.getString("industrial_type"), typeObjectNode);
                 }
             } else {
@@ -333,8 +333,8 @@ public class ListedCompanyController {
                         agg + "(tax_2016) as tax_2016, " + agg + "(tax_2015) as tax_2015, " + agg + "(tax_2014) as tax_2014, " +
                         agg + "(profit_2018) as profit_2018, " + agg + "(profit_2017) as profit_2017, " +
                         agg + "(profit_2016) as profit_2016, " + agg + "(profit_2015) as profit_2015, " + agg + "(profit_2014) as profit_2014, " +
-                        agg + "(total_2018) as total_2018, " + agg + "(total_2017) as total_2017, " +
-                        agg + "(total_2016) as total_2016, " + agg + "(total_2015) as total_2015, " + agg + "(total_2014) as total_2014 from listed_company";
+                        agg + "(remission_2018) as remission_2018, " + agg + "(remission_2017) as remission_2017, " +
+                        agg + "(remission_2016) as remission_2016, " + agg + "(remission_2015) as remission_2015, " + agg + "(remission_2014) as remission_2014 from listed_company";
                 if (type != null || province != null || city != null) {
                     sqlSentence += " where id is not null"; // in order to use 'and'
                     if (type != null) {
@@ -385,12 +385,12 @@ public class ListedCompanyController {
                     tempObjectNode.put("2014", resultSet.getDouble("profit_2014"));
                     objectNode.set("profit", tempObjectNode);
                     tempObjectNode = objectMapper.createObjectNode();
-                    tempObjectNode.put("2018", resultSet.getDouble("total_2018"));
-                    tempObjectNode.put("2017", resultSet.getDouble("total_2017"));
-                    tempObjectNode.put("2016", resultSet.getDouble("total_2016"));
-                    tempObjectNode.put("2015", resultSet.getDouble("total_2015"));
-                    tempObjectNode.put("2014", resultSet.getDouble("total_2014"));
-                    objectNode.set("total", tempObjectNode);
+                    tempObjectNode.put("2018", resultSet.getDouble("remission_2018"));
+                    tempObjectNode.put("2017", resultSet.getDouble("remission_2017"));
+                    tempObjectNode.put("2016", resultSet.getDouble("remission_2016"));
+                    tempObjectNode.put("2015", resultSet.getDouble("remission_2015"));
+                    tempObjectNode.put("2014", resultSet.getDouble("remission_2014"));
+                    objectNode.set("remission", tempObjectNode);
                 }
             }
             return objectNode;
