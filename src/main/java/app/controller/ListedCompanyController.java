@@ -243,6 +243,7 @@ public class ListedCompanyController {
                 arrayNode.add(tempObjectNode);
             }
             objectNode.set("features", arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
@@ -250,7 +251,6 @@ public class ListedCompanyController {
         }
     }
 
-    // todo: don't work in production env.
     @GetMapping("/geo")
     public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
                                @RequestParam(value = "address") String address) {
@@ -262,8 +262,16 @@ public class ListedCompanyController {
             }
             objectNode.put("lon", location.split(",")[0]);
             objectNode.put("lat", location.split(",")[1]);
+            String sqlSentence = "select id from listed_company where address ~* '" + address + "' order by id asc limit 20";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                arrayNode.add(resultSet.getInt("id"));
+            }
+            objectNode.set("result", arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
-        } catch (NullPointerException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
@@ -428,6 +436,7 @@ public class ListedCompanyController {
                     objectNode.set("remission", tempObjectNode);
                 }
             }
+            log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException | IllegalParameterException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
@@ -460,6 +469,7 @@ public class ListedCompanyController {
                 arrayNode.add(tempObjectNode);
             }
             objectNode.set("all" ,arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
