@@ -7,6 +7,7 @@
 ### environment required
 
 * java runtime environment (java8u212)
+* when use docker, run 'docker exec' instead of executing inside.
 
 ### app run command:
 
