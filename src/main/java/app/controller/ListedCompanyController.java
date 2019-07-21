@@ -301,7 +301,7 @@ public class ListedCompanyController {
                         agg + "(remission_2018) as remission_2018, " + agg + "(remission_2017) as remission_2017, " +
                         agg + "(remission_2016) as remission_2016, " + agg + "(remission_2015) as remission_2015, " + agg + "(remission_2014) as remission_2014, industrial_type from listed_company";
                 if (province != null || city != null) {
-                    sqlSentence += " where id is not null"; // in order to use 'and'
+                    sqlSentence += " where industrial_type is not null";
                     if (province != null) {
                         sqlSentence += " and province = '" + province + "'";
                     }
