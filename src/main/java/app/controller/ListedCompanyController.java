@@ -251,6 +251,7 @@ public class ListedCompanyController {
         }
     }
 
+    // todo: adjust order.
     @GetMapping("/geo")
     public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
                                @RequestParam(value = "address") String address) {
