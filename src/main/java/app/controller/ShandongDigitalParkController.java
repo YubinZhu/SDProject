@@ -15,62 +15,28 @@ import java.util.concurrent.TimeoutException;
 
 import static app.service.DatabaseService.getResultSet;
 
-
 /**
- * Created by yubzhu on 2019/7/12
+ * Created by yubzhu on 2019/7/25
  */
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/shandong")
-public class ShandongCompanyController {
+@RequestMapping("/digitalpark")
+public class ShandongDigitalParkController {
 
     @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final LogService log = new LogService(ShandongCompanyController.class);
+    private static final LogService log = new LogService(ShandongDigitalParkController.class);
 
-    @GetMapping("/category")
-    public ObjectNode queryCategoty(HttpServletRequest httpServletRequest) {
-        try {
-            ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select distinct(city) from shandong_company where city is not null order by city asc";
-            ResultSet resultSet = getResultSet(sqlSentence);
-            ObjectNode tempObjectNode = objectMapper.createObjectNode();
-            while (resultSet.next()) {
-                sqlSentence = "select distinct(county) from shandong_company where county is not null and city = '" + resultSet.getString("city") + "' order by county asc";
-                ResultSet tempResultSet = getResultSet(sqlSentence);
-                ArrayNode arrayNode = objectMapper.createArrayNode();
-                while (tempResultSet.next()) {
-                    arrayNode.add(tempResultSet.getString("county"));
-                }
-                tempObjectNode.set(resultSet.getString("city"), arrayNode);
-            }
-            objectNode.set("city", tempObjectNode);
-            objectNode.put("province", "山东省");
-            log.printExecuteOkInfo(httpServletRequest);
-            return objectNode;
-        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
-            log.printExceptionOccurredError(httpServletRequest, e);
-            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
-        }
-    }
-
-    @GetMapping("/coordinates")
+    @GetMapping("coordinates")
     public ObjectNode queryCoordinates(HttpServletRequest httpServletRequest,
-                                       @RequestParam(required = false, value = "city") String city,
-                                       @RequestParam(required = false, value = "county") String county) {
+                                       @RequestParam(required = false, value = "city") String city) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select id, lon, lat from shandong_company";
-            if (city != null || county != null) {
-                sqlSentence += " where id is not null"; // in order to use 'and'
-                if (city != null) {
-                    sqlSentence += " and city = '" + city + "'";
-                }
-                if (county != null) {
-                    sqlSentence += " and county = '" + county + "'";
-                }
+            String sqlSentence = "select id, lon, lat from shandong_digital_park";
+            if (city != null) {
+                sqlSentence += "where city = '" + city + "'";
             }
             sqlSentence += " order by id asc";
             ResultSet resultSet = getResultSet(sqlSentence);
@@ -102,7 +68,7 @@ public class ShandongCompanyController {
                                 @RequestParam(value = "name") String name) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select id, name from shandong_company where name ~* '" + name + "' order by id asc limit 20";
+            String sqlSentence = "select id, name from shandong_digital_park where name ~* '" + name + "' order by id asc limit 20";
             ResultSet resultSet = getResultSet(sqlSentence);
             ArrayNode arrayNode = objectMapper.createArrayNode();
             while (resultSet.next()) {
@@ -111,7 +77,7 @@ public class ShandongCompanyController {
                 tempObjectNode.put("name", resultSet.getString("name"));
                 arrayNode.add(tempObjectNode);
             }
-            objectNode.set("company", arrayNode);
+            objectNode.set("park", arrayNode);
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
@@ -123,20 +89,17 @@ public class ShandongCompanyController {
     @GetMapping("/information")
     public ObjectNode queryInformation(HttpServletRequest httpServletRequest,
                                        @RequestParam(value = "id") String id) {
+
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select * from shandong_company where id = " + id;
+            String sqlSentence = "select * from shandong_digital_park where id = " + id;
             ResultSet resultSet = getResultSet(sqlSentence);
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("id"));
+                objectNode.put("city", resultSet.getInt("city"));
                 objectNode.put("name", resultSet.getString("name"));
                 objectNode.put("lon", resultSet.getDouble("lon"));
                 objectNode.put("lat", resultSet.getDouble("lat"));
-                objectNode.put("lg_psn_name", resultSet.getString("lg_psn_name"));
-                objectNode.put("address", resultSet.getString("address"));
-                objectNode.put("website", resultSet.getString("website"));
-                objectNode.put("city", resultSet.getString("city"));
-                objectNode.put("county", resultSet.getString("county"));
             }
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
@@ -148,19 +111,12 @@ public class ShandongCompanyController {
 
     @GetMapping("/heatmap")
     public ObjectNode queryHeatmap(HttpServletRequest httpServletRequest,
-                                   @RequestParam(required = false, value = "city") String city,
-                                   @RequestParam(required = false, value = "county") String county) {
+                                   @RequestParam(required = false, value = "city") String city) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select lon, lat from shandong_company";
-            if (city != null || county != null) {
-                sqlSentence += " where id is not null"; // in order to use 'and'
-                if (city != null) {
-                    sqlSentence += " and city = '" + city + "'";
-                }
-                if (county != null) {
-                    sqlSentence += " and county = '" + county + "'";
-                }
+            String sqlSentence = "select lon, lat from shandong_digital_park";
+            if (city != null) {
+                sqlSentence += " where city = '" + city + "'";
             }
             sqlSentence += " order by id asc";
             ResultSet resultSet = getResultSet(sqlSentence);

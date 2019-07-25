@@ -3,10 +3,7 @@ package app.service;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static app.configure.ApplicationConfigure.*;
 
@@ -18,7 +15,7 @@ public class DatabaseService {
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
 
-    public Future<Integer> executeUpdate(String sqlSentence) {
+    private Future<Integer> executeUpdate(String sqlSentence) {
         return executorService.submit(new UpdateExecutor(sqlSentence));
     }
 
@@ -45,7 +42,7 @@ public class DatabaseService {
         }
     }
 
-    public Future<ResultSet> executeQuery(String sqlSentence) {
+    private Future<ResultSet> executeQuery(String sqlSentence) {
         return executorService.submit(new QueryExecutor(sqlSentence));
     }
 
@@ -70,5 +67,9 @@ public class DatabaseService {
                 return null;
             }
         }
+    }
+
+    public static ResultSet getResultSet(String sqlSentence) throws InterruptedException, ExecutionException, TimeoutException {
+        return new DatabaseService().executeQuery(sqlSentence).get(timeoutInterval, timeoutTimeUnit);
     }
 }

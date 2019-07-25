@@ -1,7 +1,6 @@
 package app.controller;
 
 import app.exception.IllegalParameterException;
-import app.service.DatabaseService;
 import app.service.GeoService;
 import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +15,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static app.configure.ApplicationConfigure.timeoutInterval;
-import static app.configure.ApplicationConfigure.timeoutTimeUnit;
+import static app.service.DatabaseService.getResultSet;
 
 /**
  * Created by yubzhu on 19-7-11
@@ -32,10 +30,6 @@ public class ListedCompanyController {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(ListedCompanyController.class);
-
-    private static ResultSet getResultSet(String sqlSentence) throws InterruptedException, ExecutionException, TimeoutException {
-        return new DatabaseService().executeQuery(sqlSentence).get(timeoutInterval, timeoutTimeUnit);
-    }
 
     @GetMapping("/category")
     public ObjectNode queryCategoty(HttpServletRequest httpServletRequest) {
