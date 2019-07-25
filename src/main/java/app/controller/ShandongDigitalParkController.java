@@ -29,6 +29,26 @@ public class ShandongDigitalParkController {
 
     private static final LogService log = new LogService(ShandongDigitalParkController.class);
 
+    @GetMapping("/category")
+    public ObjectNode queryCategory(HttpServletRequest httpServletRequest) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.put("province", "山东省");
+            String sqlSentence = "select distinct(city) from shandong_digital_park where city is not null order by city asc";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                arrayNode.add(resultSet.getString("city"));
+            }
+            objectNode.set("city", arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
     @GetMapping("coordinates")
     public ObjectNode queryCoordinates(HttpServletRequest httpServletRequest,
                                        @RequestParam(required = false, value = "city") String city) {

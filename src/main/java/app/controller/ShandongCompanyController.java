@@ -34,6 +34,7 @@ public class ShandongCompanyController {
     public ObjectNode queryCategoty(HttpServletRequest httpServletRequest) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.put("province", "山东省");
             String sqlSentence = "select distinct(city) from shandong_company where city is not null order by city asc";
             ResultSet resultSet = getResultSet(sqlSentence);
             ObjectNode tempObjectNode = objectMapper.createObjectNode();
@@ -47,7 +48,6 @@ public class ShandongCompanyController {
                 tempObjectNode.set(resultSet.getString("city"), arrayNode);
             }
             objectNode.set("city", tempObjectNode);
-            objectNode.put("province", "山东省");
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {

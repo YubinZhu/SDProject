@@ -33,14 +33,20 @@ public class ShandongDigitalCompanyController {
     public ObjectNode queryCategory(HttpServletRequest httpServletRequest) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.put("province", "山东省");
             String sqlSentence = "select distinct(city) from shandong_digital_company where city is not null order by city asc";
             ResultSet resultSet = getResultSet(sqlSentence);
-            ArrayNode arrayNode = objectMapper.createArrayNode();
+            ObjectNode tempObjectNode = objectMapper.createObjectNode();
             while (resultSet.next()) {
-                arrayNode.add(resultSet.getString("city"));
+                sqlSentence = "select distinct(county) from shandong_digital_company where county is not null and city = '" + resultSet.getString("city") + "' order by county asc";
+                ResultSet tempResultSet = getResultSet(sqlSentence);
+                ArrayNode arrayNode = objectMapper.createArrayNode();
+                while (tempResultSet.next()) {
+                    arrayNode.add(tempResultSet.getString("county"));
+                }
+                tempObjectNode.set(resultSet.getString("city"), arrayNode);
             }
-            objectNode.set("city", arrayNode);
-            objectNode.put("province", "山东省");
+            objectNode.set("city", tempObjectNode);
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
@@ -51,12 +57,19 @@ public class ShandongDigitalCompanyController {
 
     @GetMapping("/coordinates")
     public ObjectNode queryCoordinates(HttpServletRequest httpServletRequest,
-                                       @RequestParam(required = false, value = "city") String city) {
+                                       @RequestParam(required = false, value = "city") String city,
+                                       @RequestParam(required = false, value = "county") String county) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
             String sqlSentence = "select id, lon, lat from shandong_digital_company";
-            if (city != null) {
-                sqlSentence += " where city = '" + city + "'";
+            if (city != null || county != null) {
+                sqlSentence += " where id is not null"; // in order to use 'and'
+                if (city != null) {
+                    sqlSentence += " and city = '" + city + "'";
+                }
+                if (county != null) {
+                    sqlSentence += " and county = '" + county + "'";
+                }
             }
             sqlSentence += " order by id asc";
             ResultSet resultSet = getResultSet(sqlSentence);
@@ -134,12 +147,19 @@ public class ShandongDigitalCompanyController {
 
     @GetMapping("/heatmap")
     public ObjectNode queryHeatmap(HttpServletRequest httpServletRequest,
-                                   @RequestParam(required = false, value = "city") String city) {
+                                   @RequestParam(required = false, value = "city") String city,
+                                   @RequestParam(required = false, value = "county") String county) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
             String sqlSentence = "select lon, lat from shandong_digital_company";
-            if (city != null) {
-                sqlSentence += " where city = '" + city + "'";
+            if (city != null || county != null) {
+                sqlSentence += " where id is not null"; // in order to use 'and'
+                if (city != null) {
+                    sqlSentence += " and city = '" + city + "'";
+                }
+                if (county != null) {
+                    sqlSentence += " and county = '" + county + "'";
+                }
             }
             sqlSentence += " order by id asc";
             ResultSet resultSet = getResultSet(sqlSentence);
