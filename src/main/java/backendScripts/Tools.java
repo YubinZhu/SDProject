@@ -58,7 +58,7 @@ public class Tools extends Thread {
 
     @Override
     public void run() {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             int result = executorService.submit(new UpdateExecutor(threadSqlSentence)).get(1, TimeUnit.MINUTES);
             System.out.println("#" + threadSerialString + ": " + result + " on {" + threadSqlSentence + "}");

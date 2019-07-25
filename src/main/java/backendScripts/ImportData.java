@@ -7,8 +7,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
@@ -35,10 +34,10 @@ public class ImportData {
             addListedCompanyTypeField();
             createShandongCompanyTable();
             importShandongCompanyData();
-            createShandongSmartParkTable();
-            importShandongSmartParkData();
-            createShandongSmartCompanyTable();
-            importShandongSmartCompanyData();
+            createShandongDigitalParkTable();
+            importShandongDigitalParkData();
+            createShandongDigitalCompanyTable();
+            importShandongDigitalCompanyData();
         } catch (ClassNotFoundException | SQLException | IOException e) {
             e.printStackTrace();
         }
@@ -207,43 +206,70 @@ public class ImportData {
         }
     }
 
-    private static void createShandongSmartParkTable() throws ClassNotFoundException, SQLException {
-
-    }
-
-    private static void importShandongSmartParkData() throws IOException {
-
-    }
-
-    private static void createShandongSmartCompanyTable() throws ClassNotFoundException, SQLException {
+    private static void createShandongDigitalParkTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
-        sqlSentence = "drop table if exists shandong_smart_company";
+        sqlSentence = "drop table if exists shandong_digital_park";
+        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "create table shandong_digital_park(id serial primary key, name varchar(16), province varchar(16), city varchar(16), lon float4, lat float4)";
+        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+    }
+
+    private static void importShandongDigitalParkData() throws IOException {
+        Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/山东省数字经济产业园区和数字经济企业.xlsx"));
+        Sheet sheet = workbook.getSheetAt(0);
+        for (int i = 53; i <= sheet.getLastRowNum(); i += 1) {
+            Row row = sheet.getRow(i);
+            String location;
+            try {
+                URL url = new URL(address + "?address=山东省" + row.getCell(0) + row.getCell(1).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
+                location = new ObjectMapper().readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+            } catch (NullPointerException e) {
+                System.out.println("#shandong-digital-0-" + i + ": get location failed.");
+                continue;
+            } catch (IOException e) {
+                System.out.println("#shandong-digital-0-" + i + ": unknown error.");
+                continue;
+            }
+            String sqlSentence = "insert into shandong_digital_park(name, province, city, lon, lat) values('" +
+                    row.getCell(1).toString() + "', '山东省', '" + row.getCell(0) + "', " +
+                    location.split(",")[0] + ", " + location.split(",")[1] + ")";
+            sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
+                    .replace(", '',", ", null,").replace(", '',", ", null,");
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(new Tools(sqlSentence, "shandong-digital-0-" + i));
+            executorService.shutdown();
+        }
+    }
+
+    private static void createShandongDigitalCompanyTable() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "drop table if exists shandong_digital_company";
         System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
-        sqlSentence = "create table shandong_smart_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
+        sqlSentence = "create table shandong_digital_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
                 "reg_cap varchar(32), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(16), " +
                 "company_type varchar(32), uscc varchar(32), tel varchar(32), tel_more varchar(128), address varchar(128), " +
                 "website varchar(512), email varchar(128), production varchar(1024), lon float4, lat float4)";
         System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
-    private static void importShandongSmartCompanyData() throws IOException {
+    private static void importShandongDigitalCompanyData() throws IOException {
         Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/山东省数字经济产业园区和数字经济企业.xlsx"));
         Sheet sheet = workbook.getSheetAt(2);
-        for (int i = 2; i <= sheet.getLastRowNum(); i += 1) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i += 1) {
             Row row = sheet.getRow(i);
             String location;
             try {
                 URL url = new URL(address + "?address=" + row.getCell(12).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
                 location = new ObjectMapper().readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
             } catch (NullPointerException e) {
-                System.out.println("#shandong-smart-2-" + i + ": get location failed.");
+                System.out.println("#shandong-digital-2-" + i + ": get location failed.");
                 continue;
             } catch (IOException e) {
-                System.out.println("#shandong-smart-2-" + i + ": unknown error.");
+                System.out.println("#shandong-digital-2-" + i + ": unknown error.");
                 continue;
             }
-            String sqlSentence = "insert into shandong_smart_company(name, lg_psn_name, reg_cap, est_date, status, province, " +
+            String sqlSentence = "insert into shandong_digital_company(name, lg_psn_name, reg_cap, est_date, status, province, " +
                     "city, county, company_type, uscc, tel, tel_more, address, website, email, production, lon, lat) values('" +
                     row.getCell(0).toString() + "', '" + row.getCell(1).toString() + "', '" + row.getCell(2).toString() + "', '" +
                     row.getCell(3).toString() + "', '" + row.getCell(4).toString() + "', '" + row.getCell(5).toString() + "', '" +
@@ -252,9 +278,10 @@ public class ImportData {
                     row.getCell(12).toString() + "', '" + row.getCell(13).toString() + "', '" + row.getCell(14).toString() + "', '" +
                     row.getCell(15).toString() + "', " + location.split(",")[0] + ", " + location.split(",")[1] + ")";
             sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
-                    .replace(", '',", ", null,").replace(", '',", ", null,");
+                    .replace(", '',", ", null,").replace(", '',", ", null,")
+                    .replace(", '-',", ", null,").replace(", '-',", ", null,");
             ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.submit(new Tools(sqlSentence, "#shandong-smart-2-" + i));
+            executorService.submit(new Tools(sqlSentence, "shandong-digital-2-" + i));
             executorService.shutdown();
         }
         workbook.close();
