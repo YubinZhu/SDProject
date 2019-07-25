@@ -116,7 +116,7 @@ public class ShandongDigitalParkController {
             ResultSet resultSet = getResultSet(sqlSentence);
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("id"));
-                objectNode.put("city", resultSet.getInt("city"));
+                objectNode.put("city", resultSet.getString("city"));
                 objectNode.put("name", resultSet.getString("name"));
                 objectNode.put("lon", resultSet.getDouble("lon"));
                 objectNode.put("lat", resultSet.getDouble("lat"));
