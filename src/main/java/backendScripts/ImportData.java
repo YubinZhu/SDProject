@@ -1,6 +1,7 @@
 package backendScripts;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -9,6 +10,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import java.io.*;
 import java.net.URL;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,7 +40,9 @@ public class ImportData {
             importShandongDigitalParkData();
             createShandongDigitalCompanyTable();
             importShandongDigitalCompanyData();
-        } catch (ClassNotFoundException | SQLException | IOException e) {
+            createDistrictBoundaryTable();
+            importDistrictBoundaryData();
+        } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }
         System.out.flush();
@@ -47,7 +51,7 @@ public class ImportData {
     private static void createListedCompanyTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "drop table if exists listed_company";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
         sqlSentence = "create table listed_company(id serial primary key, sec_code varchar(16), sec_abbr_name varchar(16), com_chn_name varchar(32), " +
                 "province varchar(16), website varchar(64), address varchar(128), employee_num int, city varchar(16), " +
@@ -62,7 +66,7 @@ public class ImportData {
                 "to_ratio_2018 float4, to_ratio_2017 float4, to_ratio_2016 float4, to_ratio_2015 float4, to_ratio_2014 float4, " +
                 "total_value bigint, remission_2018 float4, remission_2017 float4, remission_2016 float4, remission_2015 float4, remission_2014 float4, " +
                 "board_type varchar(8), bachelor_num int, master_num int, doctor_num int, lon float4, lat float4)";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void importListedCompanyData() throws IOException {
@@ -120,7 +124,7 @@ public class ImportData {
                 sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                         .replace(", '',", ", null,").replace(", '',", ", null,");
                 ExecutorService executorService = Executors.newSingleThreadExecutor();
-                executorService.submit(new Tools(sqlSentence, "listed-" + i + "-" + j));
+                executorService.submit(new DatabaseExecutor(sqlSentence, "listed-" + i + "-" + j));
                 executorService.shutdown();
             }
         }
@@ -130,9 +134,9 @@ public class ImportData {
     private static void addListedCompanyTypeField() throws IOException, ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "alter table listed_company drop column if exists industrial_type";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         sqlSentence = "alter table listed_company add industrial_type varchar(16)";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/产业类型.xlsx"));
         for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
             Sheet sheet = workbook.getSheetAt(i);
@@ -149,7 +153,7 @@ public class ImportData {
                             "' where website = '" + row.getCell(3) + "' and industrial_type is null";
                 }
                 ExecutorService executorService = Executors.newSingleThreadExecutor();
-                executorService.submit(new Tools(sqlSentence, "listed_add-" + i + "-" + j));
+                executorService.submit(new DatabaseExecutor(sqlSentence, "listed_add-" + i + "-" + j));
                 executorService.shutdown();
             }
         }
@@ -159,13 +163,13 @@ public class ImportData {
     private static void createShandongCompanyTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "drop table if exists shandong_company";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
         sqlSentence = "create table shandong_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
                 "reg_cap varchar(32), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(16), " +
                 "company_type varchar(32), uscc varchar(32), tel varchar(32), tel_more varchar(128), address varchar(128), " +
                 "website varchar(512), email varchar(128), production varchar(1024), lon float4, lat float4)";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void importShandongCompanyData() throws IOException {
@@ -198,7 +202,7 @@ public class ImportData {
                     sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                             .replace(", '',", ", null,").replace(", '',", ", null,");
                     ExecutorService executorService = Executors.newSingleThreadExecutor();
-                    executorService.submit(new Tools(sqlSentence, "shandong-" + fileIndex + "-" + i + "-" + j));
+                    executorService.submit(new DatabaseExecutor(sqlSentence, "shandong-" + fileIndex + "-" + i + "-" + j));
                     executorService.shutdown();
                 }
             }
@@ -209,15 +213,15 @@ public class ImportData {
     private static void createShandongDigitalParkTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "drop table if exists shandong_digital_park";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         sqlSentence = "create table shandong_digital_park(id serial primary key, name varchar(16), province varchar(16), city varchar(16), lon float4, lat float4)";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void importShandongDigitalParkData() throws IOException {
         Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/山东省数字经济产业园区和数字经济企业.xlsx"));
         Sheet sheet = workbook.getSheetAt(0);
-        for (int i = 53; i <= sheet.getLastRowNum(); i += 1) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i += 1) {
             Row row = sheet.getRow(i);
             String location;
             try {
@@ -236,7 +240,7 @@ public class ImportData {
             sqlSentence = sqlSentence.replace(", ,", ", null,").replace(", ,", ", null,")
                     .replace(", '',", ", null,").replace(", '',", ", null,");
             ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.submit(new Tools(sqlSentence, "shandong-digital-0-" + i));
+            executorService.submit(new DatabaseExecutor(sqlSentence, "shandong-digital-0-" + i));
             executorService.shutdown();
         }
     }
@@ -244,13 +248,13 @@ public class ImportData {
     private static void createShandongDigitalCompanyTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "drop table if exists shandong_digital_company";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         /* WARNING: Don't import production description 'cause string format is awful and too long. */
         sqlSentence = "create table shandong_digital_company(id serial primary key, name varchar(32), lg_psn_name varchar(32), " +
                 "reg_cap varchar(32), est_date date, status varchar(8), province varchar(8), city varchar(8), county varchar(16), " +
                 "company_type varchar(32), uscc varchar(32), tel varchar(32), tel_more varchar(128), address varchar(128), " +
                 "website varchar(512), email varchar(128), production varchar(1024), lon float4, lat float4)";
-        System.out.println(Tools.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void importShandongDigitalCompanyData() throws IOException {
@@ -281,9 +285,81 @@ public class ImportData {
                     .replace(", '',", ", null,").replace(", '',", ", null,")
                     .replace(", '-',", ", null,").replace(", '-',", ", null,");
             ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.submit(new Tools(sqlSentence, "shandong-digital-2-" + i));
+            executorService.submit(new DatabaseExecutor(sqlSentence, "shandong-digital-2-" + i));
             executorService.shutdown();
         }
         workbook.close();
+    }
+
+    private static void createDistrictBoundaryTable() throws ClassNotFoundException, SQLException{
+        String sqlSentence;
+        sqlSentence = "drop table if exists district_boundary";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "create table district_boundary(province varchar(32), city varchar(32), district varchar(32))";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "alter table district_boundary add constraint pk primary key(province, city, district)";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "select addgeometrycolumn('district_boundary', 'geom', 4326, 'multipolygon', 2)";
+        ResultSet resultSet = DatabaseExecutor.executeQuery(sqlSentence);
+        resultSet.next();
+        System.out.println(resultSet.getString("addgeometrycolumn") + " on {" + sqlSentence + "}");
+    }
+
+    private static void importDistrictBoundaryData() throws IOException, NullPointerException {
+        ObjectNode countryObjectNode = AMapGetDistrict.getDistrict("中华人民共和国", 1, "all");
+        if (countryObjectNode == null) {
+            throw new NullPointerException();
+        }
+        String countryPolyline = countryObjectNode.get("districts").get(0).get("polyline").asText();
+        String countrySqlSentence = "insert into district_boundary(province, city, district, geom) values('" +
+                "全部', '全部', '全部', st_geomfromtext('multipolygon(((" + countryPolyline.replace(",", " ").replace(";", ", ").replace("|", ")), ((") + ")))', 4326))";
+        ExecutorService countryExecutorService = Executors.newSingleThreadExecutor();
+        countryExecutorService.submit(new DatabaseExecutor(countrySqlSentence, "全部-全部-全部"));
+        countryExecutorService.shutdown();
+        ArrayNode provinceArrayNode = (ArrayNode)countryObjectNode.get("districts").get(0).get("districts");
+        for (int i = 0; i < provinceArrayNode.size(); i += 1) {
+            String provinceName = provinceArrayNode.get(i).get("name").asText();
+            String provinceCode = provinceArrayNode.get(i).get("adcode").asText();
+            ObjectNode provinceObjectNode = AMapGetDistrict.getDistrict(provinceCode, 1, "all");
+            if (provinceObjectNode == null) {
+                throw new NullPointerException();
+            }
+            String provincePolyline = provinceObjectNode.get("districts").get(0).get("polyline").asText();
+            String provinceSqlSentence = "insert into district_boundary(province, city, district, geom) values('" +
+                    provinceName + "', '全部', '全部', st_geomfromtext('multipolygon(((" + provincePolyline.replace(",", " ").replace(";", ", ").replace("|", ")), ((") + ")))', 4326))";
+            ExecutorService provinceExecutorService = Executors.newSingleThreadExecutor();
+            provinceExecutorService.submit(new DatabaseExecutor(provinceSqlSentence, provinceName + "-全部-全部"));
+            provinceExecutorService.shutdown();
+            ArrayNode cityArrayNode = (ArrayNode)provinceObjectNode.get("districts").get(0).get("districts");
+            for (int j = 0; j < cityArrayNode.size(); j += 1) {
+                String cityName = cityArrayNode.get(j).get("name").asText();
+                String cityCode = cityArrayNode.get(j).get("adcode").asText();
+                ObjectNode cityObjectNode = AMapGetDistrict.getDistrict(cityCode, 1, "all");
+                if (cityObjectNode == null) {
+                    throw new NullPointerException();
+                }
+                String cityPolyline = cityObjectNode.get("districts").get(0).get("polyline").asText();
+                String citySqlSentence = "insert into district_boundary(province, city, district, geom) values('" +
+                        provinceName + "', '" + cityName + "', '全部', st_geomfromtext('multipolygon(((" + cityPolyline.replace(",", " ").replace(";", ", ").replace("|", ")), ((") + ")))', 4326))";
+                ExecutorService cityExecutorService = Executors.newSingleThreadExecutor();
+                cityExecutorService.submit(new DatabaseExecutor(citySqlSentence, provinceName + "-" + cityName + "-全部"));
+                cityExecutorService.shutdown();
+                ArrayNode districtArrayNode = (ArrayNode)cityObjectNode.get("districts").get(0).get("districts");
+                for (int k = 0; k < districtArrayNode.size(); k += 1) {
+                    String districtName = districtArrayNode.get(k).get("name").asText();
+                    String districtCode = districtArrayNode.get(k).get("adcode").asText();
+                    ObjectNode districtObjectNode = AMapGetDistrict.getDistrict(districtCode, 0, "all");
+                    if (districtObjectNode == null) {
+                        throw new NullPointerException();
+                    }
+                    String districtPolyline = districtObjectNode.get("districts").get(0).get("polyline").asText();
+                    String districtSqlSentence = "insert into district_boundary(province, city, district, geom) values('" +
+                            provinceName + "', '" + cityName + "', '" + districtName + "', st_geomfromtext('multipolygon(((" + districtPolyline.replace(",", " ").replace(";", ", ").replace("|", ")), ((") + ")))', 4326))";
+                    ExecutorService districtExecutorService = Executors.newSingleThreadExecutor();
+                    districtExecutorService.submit(new DatabaseExecutor(districtSqlSentence, provinceName + "-" + cityName + "-" + districtName));
+                    districtExecutorService.shutdown();
+                }
+            }
+        }
     }
 }
