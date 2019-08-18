@@ -86,16 +86,35 @@ public class GeometryController {
             }
             if (level.equals("city") || level.equals("district")) {
                 if (city == null) {
-                    objectNode.set("city", packupPolygon("select city, st_astext(geom) from district_boundary where city != '全部' and district = '全部'", "city"));
+                    if (province == null) {
+                        objectNode.set("city", packupPolygon("select city, st_astext(geom) from district_boundary where city != '全部' and district = '全部'", "city"));
+                    } else {
+                        objectNode.set("city", packupPolygon("select city, st_astext(geom) from district_boundary where province = '" + province + "' and city != '全部' and district = '全部'", "city"));
+                    }
                 } else if (district == null) {
-                    objectNode.set("city", packupPolygon("select city, st_astext(geom) from district_boundary where city = '" + city + "' and district = '全部'", "city"));
+                    objectNode.set("city", packupPolygon("select city, st_astext(geom) from district_boundary where province = '" + province + "' and city = '" + city + "' and district = '全部'", "city"));
                 }
             }
             if (level.equals("district")) {
                 if (district == null) {
-                    objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where district != '全部'", "district"));
+                    if (province == null) {
+                        objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where district != '全部'", "district"));
+                    } else if (city == null) {
+                        objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where province = '" + province + "' and district != '全部'", "district"));
+                    } else {
+                        objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where province = '" + province + "' and city = '" + city + "' and district != '全部'", "district"));
+                    }
                 } else {
-                    objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where district = '" + district + "'", "district"));
+                    objectNode.set("district", packupPolygon("select district, st_astext(geom) from district_boundary where province = '" + province + "' and city = '" + city + "' and district = '" + district + "'", "district"));
+                }
+            }
+            /* double check for bad data */
+            if (level.equals("city") || level.equals("district")) {
+                if (city != null && objectNode.get("city").size() == 0) {
+                    objectNode.set("city", packupPolygon("select district, st_astext(geom) from district_boundary where district = '" + city + "'", "district"));
+                    if (objectNode.get("district") != null) {
+                        objectNode.set("district", objectMapper.createArrayNode());
+                    }
                 }
             }
             log.printExecuteOkInfo(httpServletRequest);
