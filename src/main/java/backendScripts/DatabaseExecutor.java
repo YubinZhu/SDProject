@@ -3,23 +3,31 @@ package backendScripts;
 import java.sql.*;
 import java.util.concurrent.*;
 
+import static app.configure.ApplicationConfigure.*;
+
 /**
  * Created by yubzhu on 2019/7/5
  */
 
-public class Tools extends Thread {
+public class DatabaseExecutor extends Thread {
 
-    private static final String driver = "org.postgresql.Driver";
+    private String threadSqlSentence;
 
-    private static final String ip = "100.64.137.141";
+    private String threadSerialString;
 
-    private static final String port = "5432";
+    DatabaseExecutor(String sqlSentence, String serialString) {
+        threadSqlSentence = sqlSentence;
+        threadSerialString = serialString;
+    }
 
-    private static final String database = "sdproject";
-
-    private static final String user = "postgres";
-
-    private static final String password = "";
+    static ResultSet executeQuery(String sqlSentence) throws ClassNotFoundException, SQLException {
+        Class.forName(driver);
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/" + database, user, password);
+        Statement statement = connection.createStatement();
+        ResultSet result = statement.executeQuery(sqlSentence);
+        connection.close();
+        return result;
+    }
 
     static int executeUpdate(String sqlSentence) throws ClassNotFoundException, SQLException {
         Class.forName(driver);
@@ -30,16 +38,8 @@ public class Tools extends Thread {
         return result;
     }
 
-    private String threadSqlSentence;
-
-    private String threadSerialString;
-
-    Tools(String sqlSentence, String serialString) {
-        threadSqlSentence = sqlSentence;
-        threadSerialString = serialString;
-    }
-
     class UpdateExecutor implements Callable<Integer> {
+
         private String sqlSentence;
 
         UpdateExecutor(String sqlSentence) {
@@ -58,9 +58,9 @@ public class Tools extends Thread {
 
     @Override
     public void run() {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            int result = executorService.submit(new UpdateExecutor(threadSqlSentence)).get(1, TimeUnit.MINUTES);
+            int result = executorService.submit(new UpdateExecutor(threadSqlSentence)).get(timeoutInterval, timeoutTimeUnit);
             System.out.println("#" + threadSerialString + ": " + result + " on {" + threadSqlSentence + "}");
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             System.out.println("#" + threadSerialString + ": execute update failed.");

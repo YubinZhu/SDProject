@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationConfigure {
 
     /* for controller */
-    public static final int timeoutInterval = 15;
+    public static final int timeoutInterval = 120;
 
     public static final TimeUnit timeoutTimeUnit = TimeUnit.SECONDS;
 
@@ -29,7 +29,9 @@ public class ApplicationConfigure {
     public static final int maxThreads = 32;
 
     /* for geo service */
-    public static final String address = "https://restapi.amap.com/v3/geocode/geo";
+    public static final String geoUrl = "https://restapi.amap.com/v3/geocode/geo";
+
+    public static final String districtUrl = "https://restapi.amap.com/v3/config/district";
 
     public static final String key = "c346ef3fe374bf57803d4eb57aca0fb0";
 

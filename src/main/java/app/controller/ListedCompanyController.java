@@ -1,7 +1,7 @@
 package app.controller;
 
 import app.exception.IllegalParameterException;
-import app.service.GeoService;
+import app.service.AMapService;
 import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -251,7 +251,7 @@ public class ListedCompanyController {
                                @RequestParam(value = "address") String address) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String location = GeoService.getLocation(address);
+            String location = AMapService.getGeo(address);
             if (location == null) {
                 throw new NullPointerException();
             }
