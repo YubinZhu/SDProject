@@ -29,11 +29,12 @@ public class ImportData {
 
     private static final boolean batch = false;
 
+    /* WARNING: If main() fucntion don't stop, there must be some wrong data. */
     public static void main(String[] args) {
         try {
             createListedCompanyTable();
             importListedCompanyData();
-            addListedCompanyTypeField();
+            addListedCompanyColumn();
             createShandongCompanyTable();
             importShandongCompanyData();
             createShandongDigitalParkTable();
@@ -42,6 +43,9 @@ public class ImportData {
             importShandongDigitalCompanyData();
             createDistrictBoundaryTable();
             importDistrictBoundaryData();
+            updateListedCompanyProvinceCity();
+            createHebeiClusterTable();
+            importHebeiClusterData();
         } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }
@@ -131,7 +135,8 @@ public class ImportData {
         workbook.close();
     }
 
-    private static void addListedCompanyTypeField() throws IOException, ClassNotFoundException, SQLException {
+    /* WARNING: Dangerous function! */
+    private static void addListedCompanyColumn() throws IOException, ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "alter table listed_company drop column if exists industrial_type";
         System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
@@ -305,7 +310,7 @@ public class ImportData {
         System.out.println(resultSet.getString("addgeometrycolumn") + " on {" + sqlSentence + "}");
     }
 
-    private static void importDistrictBoundaryData() throws IOException, NullPointerException {
+    private static void importDistrictBoundaryData() throws NullPointerException {
         ObjectNode countryObjectNode = AMapGetDistrict.getDistrict("中华人民共和国", 1, "all");
         if (countryObjectNode == null) {
             throw new NullPointerException();
@@ -360,6 +365,41 @@ public class ImportData {
                     districtExecutorService.shutdown();
                 }
             }
+        }
+    }
+
+    private static void updateListedCompanyProvinceCity() throws ClassNotFoundException, SQLException{
+        String sqlSentence;
+        sqlSentence = "update listed_company set province = concat(province, '市') where province in ('上海', '北京', '重庆', '天津')";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "update listed_company set city = concat(left(province, 2), '城区') where province in ('上海市', '北京市', '重庆市', '天津市') and right(city, 2) != '城区'";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "update listed_company set city = '莱芜区' where city = '莱芜市'";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+    }
+
+    private static void createHebeiClusterTable() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "drop table if exists hebei_cluster";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "create table hebei_cluster(id serial primary key, city varchar(16), cluster_name varchar(64), district varchar(16), " +
+                "industrial_type varchar(32), production varchar(64), produce_company_num int, matched_company_num int, related_company_num int, income int)";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+    }
+
+    private static void importHebeiClusterData() throws IOException {
+        Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/河北省产业集群.xlsx"));
+        Sheet sheet = workbook.getSheetAt(0);
+        for (int i = 1; i <= sheet.getLastRowNum(); i += 1) {
+            Row row = sheet.getRow(i);
+            String sqlSentence = "insert into hebei_cluster(city, cluster_name, district, industrial_type, production, produce_company_num, matched_company_num, related_company_num, income) values('" +
+                    row.getCell(1).toString().replace(" ", "") + "市', '" + row.getCell(2).toString().replace(" ", "") + "', '" +
+                    row.getCell(3).toString().replace(" ", "") + "', '" + row.getCell(4).toString().replace(" ", "") + "', '" +
+                    row.getCell(5).toString().replace(" ", "") + "', " + row.getCell(6).toString() + ", " +
+                    row.getCell(7).toString() + ", " + row.getCell(8).toString() + ", " + row.getCell(9).toString() + ")";
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(new DatabaseExecutor(sqlSentence, "hebei-cluster-0-" + i));
+            executorService.shutdown();
         }
     }
 }
