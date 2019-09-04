@@ -78,9 +78,9 @@ public class ListedCompanyController {
                 }
                 if (province != null) {
                     sqlSentence += " and province = '" + province + "'";
-                }
-                if (city != null) {
-                    sqlSentence += " and city = '" + city + "'";
+                    if (city != null) {
+                        sqlSentence += " and city = '" + city + "'";
+                    }
                 }
             }
             sqlSentence += " order by id asc";

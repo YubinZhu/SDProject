@@ -1,6 +1,7 @@
 package app.controller;
 
 import app.exception.IllegalParameterException;
+import app.service.AMapService;
 import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -31,12 +32,31 @@ public class GeometryController {
 
     private static final LogService log = new LogService(GeometryController.class);
 
+    @GetMapping("/geo")
+    public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
+                               @RequestParam(value = "address") String address) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String location = AMapService.getGeo(address);
+            if (location == null) {
+                throw new NullPointerException();
+            }
+            objectNode.put("lon", location.split(",")[0]);
+            objectNode.put("lat", location.split(",")[1]);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
     @GetMapping("/default")
     public ObjectNode queryDefaultDistrictPolygon(HttpServletRequest httpServletRequest) {
         return queryDistrictPolygon(httpServletRequest, null, null, null, "city");
     }
 
-    private ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException{
+    public static ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException{
         return (ArrayNode)objectMapper.readTree(multiPolygonString.replace("MULTIPOLYGON(((", "[[[").replace(")))", "]]]").replace(")),((", "],[").replace(",", "],[").replace(" ", ", ").replace("],[", "], ["));
     }
 
@@ -44,7 +64,7 @@ public class GeometryController {
         ResultSet resultSet = getResultSet(sqlSentence);
         ArrayNode arrayNode = objectMapper.createArrayNode();
         while (resultSet.next()) {
-            ObjectNode objectNode = objectMapper.createObjectNode();
+            ObjectNode objectNode = objectMapper. createObjectNode();
             if (level.equals("country")) {
                 objectNode.put("name", "中华人民共和国");
             } else {
@@ -126,9 +146,28 @@ public class GeometryController {
     }
 
     @GetMapping("/relation")
-    public ObjectNode queryRelation(HttpServletRequest httpServletRequest) {
-        //todo
-        return null;
+    public ObjectNode queryRelation(HttpServletRequest httpServletRequest,
+                                    @RequestParam(value = "keyword") String keyword) {
+        try {
+            ObjectNode result = AMapService.getDistrict(keyword, 1, "base");
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            if (result == null) {
+                throw new NullPointerException();
+            }
+            if (result.get("districts").get(0).get("level").asText().equals("district")) {
+                return (ObjectNode)objectNode.set("subdistricts", objectMapper.createArrayNode());
+            } else {
+                ArrayNode arrayNode = (ArrayNode)result.get("districts").get(0).get("districts");
+                ArrayNode tempArrayNode = objectMapper.createArrayNode();
+                for (int i = 0; i < arrayNode.size(); i += 1) {
+                    tempArrayNode.add(arrayNode.get(i).get("name").asText());
+                }
+                return (ObjectNode)objectNode.set("subdistricts", tempArrayNode);
+            }
+        } catch (NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
     }
 
     @GetMapping("/customize")

@@ -23,7 +23,7 @@ public class AMapService {
         }
     }
 
-    static ObjectNode getDistrict(String keyword, int subDistrict, String extensions) {
+    public static ObjectNode getDistrict(String keyword, int subDistrict, String extensions) {
         try {
             URL url = new URL(districtUrl + "?keywords=" + keyword + "&subdistrict=" + subDistrict + "&extensions=" + extensions + "&key=" + key);
             return (ObjectNode)new ObjectMapper().readTree(url);
