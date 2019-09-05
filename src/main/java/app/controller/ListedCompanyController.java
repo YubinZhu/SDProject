@@ -6,7 +6,6 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,13 +25,12 @@ import static app.service.DatabaseService.getResultSet;
 @RequestMapping("/listed")
 public class ListedCompanyController {
 
-    @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(ListedCompanyController.class);
 
     @GetMapping("/category")
-    public ObjectNode queryCategoty(HttpServletRequest httpServletRequest) {
+    public ObjectNode queryCategory(HttpServletRequest httpServletRequest) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
             String sqlSentence = "select distinct(industrial_type) from listed_company where industrial_type is not null order by industrial_type asc";
@@ -141,13 +139,14 @@ public class ListedCompanyController {
             ResultSet resultSet = getResultSet(sqlSentence);
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("id"));
+                objectNode.put("sec_code", resultSet.getString("sec_code"));
+                objectNode.put("sec_abbr_name", resultSet.getString("sec_abbr_name"));
                 objectNode.put("name", resultSet.getString("com_chn_name"));
-                objectNode.put("lon", resultSet.getDouble("lon"));
-                objectNode.put("lat", resultSet.getDouble("lat"));
-                objectNode.put("industrial_type", resultSet.getString("industrial_type"));
-                objectNode.put("address", resultSet.getString("address"));
-                objectNode.put("website", resultSet.getString("website"));
                 objectNode.put("province", resultSet.getString("province"));
+                objectNode.put("website", resultSet.getString("website"));
+                objectNode.put("address", resultSet.getString("address"));
+                objectNode.put("employee_num", resultSet.getInt("employee_num"));
+                objectNode.put("city", resultSet.getString("city"));
                 ObjectNode tempObjectNode = objectMapper.createObjectNode();
                 tempObjectNode.put("2018", resultSet.getDouble("income_2018"));
                 tempObjectNode.put("2017", resultSet.getDouble("income_2017"));
@@ -190,6 +189,9 @@ public class ListedCompanyController {
                 tempObjectNode.put("2015", resultSet.getDouble("remission_2015"));
                 tempObjectNode.put("2014", resultSet.getDouble("remission_2014"));
                 objectNode.set("remission", tempObjectNode);
+                objectNode.put("lon", resultSet.getDouble("lon"));
+                objectNode.put("lat", resultSet.getDouble("lat"));
+                objectNode.put("industrial_type", resultSet.getString("industrial_type"));
             }
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
@@ -245,7 +247,7 @@ public class ListedCompanyController {
         }
     }
 
-    // todo: adjust order.
+    // todo: discard this function in future version.
     @GetMapping("/geo")
     public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
                                @RequestParam(value = "address") String address) {

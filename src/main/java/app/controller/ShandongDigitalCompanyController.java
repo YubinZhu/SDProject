@@ -4,7 +4,6 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +23,6 @@ import static app.service.DatabaseService.getResultSet;
 @RequestMapping("/digital")
 public class ShandongDigitalCompanyController {
 
-    @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(ShandongDigitalCompanyController.class);
@@ -129,13 +127,23 @@ public class ShandongDigitalCompanyController {
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("id"));
                 objectNode.put("name", resultSet.getString("name"));
-                objectNode.put("lon", resultSet.getDouble("lon"));
-                objectNode.put("lat", resultSet.getDouble("lat"));
                 objectNode.put("lg_psn_name", resultSet.getString("lg_psn_name"));
-                objectNode.put("address", resultSet.getString("address"));
-                objectNode.put("website", resultSet.getString("website"));
+                objectNode.put("reg_cap", resultSet.getString("reg_cap"));
+                objectNode.put("est_date", resultSet.getString("est_date"));
+                objectNode.put("status", resultSet.getString("status"));
+                objectNode.put("province", resultSet.getString("province"));
                 objectNode.put("city", resultSet.getString("city"));
                 objectNode.put("county", resultSet.getString("county"));
+                objectNode.put("type", resultSet.getString("company_type"));
+                objectNode.put("uscc", resultSet.getString("uscc"));
+                objectNode.put("tel", resultSet.getString("tel"));
+                objectNode.put("tel_more", resultSet.getString("tel_more"));
+                objectNode.put("address", resultSet.getString("address"));
+                objectNode.put("website", resultSet.getString("website"));
+                objectNode.put("email", resultSet.getString("email"));
+                objectNode.put("production", resultSet.getString("production"));
+                objectNode.put("lon", resultSet.getDouble("lon"));
+                objectNode.put("lat", resultSet.getDouble("lat"));
             }
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;

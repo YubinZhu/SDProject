@@ -6,7 +6,6 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +26,6 @@ import static app.service.DatabaseService.getResultSet;
 @RequestMapping("/geometry")
 public class GeometryController {
 
-    @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(GeometryController.class);
@@ -56,7 +54,7 @@ public class GeometryController {
         return queryDistrictPolygon(httpServletRequest, null, null, null, "city");
     }
 
-    public static ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException{
+    static ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException{
         return (ArrayNode)objectMapper.readTree(multiPolygonString.replace("MULTIPOLYGON(((", "[[[").replace(")))", "]]]").replace(")),((", "],[").replace(",", "],[").replace(" ", ", ").replace("],[", "], ["));
     }
 

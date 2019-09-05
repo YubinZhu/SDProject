@@ -4,7 +4,6 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +23,6 @@ import static app.service.DatabaseService.getResultSet;
 @RequestMapping("/digitalpark")
 public class ShandongDigitalParkController {
 
-    @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(ShandongDigitalParkController.class);
@@ -116,8 +114,9 @@ public class ShandongDigitalParkController {
             ResultSet resultSet = getResultSet(sqlSentence);
             if (resultSet.next()) {
                 objectNode.put("id", resultSet.getInt("id"));
-                objectNode.put("city", resultSet.getString("city"));
                 objectNode.put("name", resultSet.getString("name"));
+                objectNode.put("province", resultSet.getString("province"));
+                objectNode.put("city", resultSet.getString("city"));
                 objectNode.put("lon", resultSet.getDouble("lon"));
                 objectNode.put("lat", resultSet.getDouble("lat"));
             }

@@ -5,7 +5,6 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +26,6 @@ import static app.service.DatabaseService.getResultSet;
 @RequestMapping("/hebei")
 public class HebeiClusterController {
 
-    @Autowired
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(HebeiClusterController.class);
@@ -73,86 +71,88 @@ public class HebeiClusterController {
 
     @GetMapping("/information")
     public ObjectNode queryGeometry(HttpServletRequest httpServletRequest,
-                                    @RequestParam(required = false, value = "name") String name,
-                                    @RequestParam(required = false, value = "type") String type) {
+                                    @RequestParam(value = "name") String name) {
         try {
-            if (name != null) {
-                ObjectNode objectNode = objectMapper.createObjectNode();
-                String sqlSentence = "select * from hebei_cluster where cluster_name = '" + name + "' order by id asc";
-                ResultSet resultSet = getResultSet(sqlSentence);
-                if (resultSet.next()) {
-                    objectNode.put("name", resultSet.getString("cluster_name"));
-                    objectNode.put("city", resultSet.getString("city"));
-                    objectNode.put("district", resultSet.getString("district"));
-                    objectNode.put("type", resultSet.getString("industrial_type"));
-                    objectNode.put("production", resultSet.getString("production"));
-                    objectNode.put("produce_company_num", resultSet.getInt("produce_company_num"));
-                    objectNode.put("matched_company_num", resultSet.getInt("matched_company_num"));
-                    objectNode.put("related_company_num", resultSet.getInt("related_company_num"));
-                    objectNode.put("income", resultSet.getInt("income"));
-                    String tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" +
-                            resultSet.getString("city") + "' and district = '" + resultSet.getString("district") + "'";
-                    ResultSet tempResultSet = getResultSet(tempSqlSentence);
-                    if (tempResultSet.next()) {
-                        objectNode.set("multipolygon", multiPolygonStringToArrayNode(tempResultSet.getString("st_astext")));
-                    } else {
-                        objectNode.set("multipolygon", null);
-                    }
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select * from hebei_cluster where cluster_name = '" + name + "' order by id asc";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            if (resultSet.next()) {
+                objectNode.put("city", resultSet.getString("city"));
+                objectNode.put("name", resultSet.getString("cluster_name"));
+                objectNode.put("district", resultSet.getString("district"));
+                objectNode.put("type", resultSet.getString("industrial_type"));
+                objectNode.put("production", resultSet.getString("production"));
+                objectNode.put("produce_company_num", resultSet.getInt("produce_company_num"));
+                objectNode.put("matched_company_num", resultSet.getInt("matched_company_num"));
+                objectNode.put("related_company_num", resultSet.getInt("related_company_num"));
+                objectNode.put("income", resultSet.getInt("income"));
+                String tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" +
+                        resultSet.getString("city") + "' and district = '" + resultSet.getString("district") + "'";
+                ResultSet tempResultSet = getResultSet(tempSqlSentence);
+                if (tempResultSet.next()) {
+                    objectNode.set("multipolygon", multiPolygonStringToArrayNode(tempResultSet.getString("st_astext")));
+                } else {
+                    objectNode.set("multipolygon", null);
                 }
-                log.printExecuteOkInfo(httpServletRequest);
-                return objectNode;
-            } else if (type != null) {
-                ObjectNode objectNode = objectMapper.createObjectNode();
-                String sqlSentence = "select * from hebei_cluster where industrial_type = '" + type + "' order by id asc";
-                ResultSet resultSet = getResultSet(sqlSentence);
-                int produceCompanyNum = 0;
-                int matchedCompanyNum = 0;
-                int relatedCompanyNum = 0;
-                int income = 0;
-                ArrayNode clusterArrayNode = objectMapper.createArrayNode();
-                ArrayNode multiPolygonArrayNode = objectMapper.createArrayNode();
-                while (resultSet.next()) {
-                    produceCompanyNum += resultSet.getInt("produce_company_num");
-                    matchedCompanyNum += resultSet.getInt("matched_company_num");
-                    relatedCompanyNum += resultSet.getInt("related_company_num");
-                    income += resultSet.getInt("income");
-                    clusterArrayNode.add(resultSet.getString("cluster_name"));
-                    String tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" +
-                            resultSet.getString("city") + "' and district = '" + resultSet.getString("district") + "'";
-                    ResultSet tempResultSet = getResultSet(tempSqlSentence);
-                    if (tempResultSet.next()) {
-                        ArrayNode insideArrayNode = multiPolygonStringToArrayNode(tempResultSet.getString("st_astext"));
-                        for (int i = 0; i < insideArrayNode.size(); i += 1) {
-                            multiPolygonArrayNode.add(insideArrayNode.get(i));
-                        }
-                    } else {
-                        System.out.println(resultSet.getString("district"));
-                        tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" + resultSet.getString("district") + "'";
-                        tempResultSet = getResultSet(tempSqlSentence);
-                        if (tempResultSet.next()) {
-                            ArrayNode insideArrayNode = multiPolygonStringToArrayNode(tempResultSet.getString("st_astext"));
-                            for (int i = 0; i < insideArrayNode.size(); i += 1) {
-                                multiPolygonArrayNode.add(insideArrayNode.get(i));
-                            }
-                        }
-                    }
-                }
-                objectNode.put("produce_company_num", produceCompanyNum);
-                objectNode.put("matched_company_num", matchedCompanyNum);
-                objectNode.put("related_company_num", relatedCompanyNum);
-                objectNode.put("income", income);
-                objectNode.set("cluster", clusterArrayNode);
-                objectNode.set("multipolygon", multiPolygonArrayNode);
-                log.printExecuteOkInfo(httpServletRequest);
-                return objectNode;
-            } else {
-                throw new IllegalParameterException();
             }
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | IllegalParameterException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
     }
 
-    // todo: @GetMapping("/heatmap")
+    @GetMapping("/statistic")
+    public ObjectNode queryStatistic(HttpServletRequest httpServletRequest,
+                                     @RequestParam(value = "type") String type) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select * from hebei_cluster where industrial_type = '" + type + "' order by id asc";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            int produceCompanyNum = 0;
+            int matchedCompanyNum = 0;
+            int relatedCompanyNum = 0;
+            int income = 0;
+            ArrayNode clusterArrayNode = objectMapper.createArrayNode();
+            ArrayNode multiPolygonArrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                produceCompanyNum += resultSet.getInt("produce_company_num");
+                matchedCompanyNum += resultSet.getInt("matched_company_num");
+                relatedCompanyNum += resultSet.getInt("related_company_num");
+                income += resultSet.getInt("income");
+                clusterArrayNode.add(resultSet.getString("cluster_name"));
+                String tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" +
+                        resultSet.getString("city") + "' and district = '" + resultSet.getString("district") + "'";
+                ResultSet tempResultSet = getResultSet(tempSqlSentence);
+                if (tempResultSet.next()) {
+                    ArrayNode insideArrayNode = multiPolygonStringToArrayNode(tempResultSet.getString("st_astext"));
+                    for (int i = 0; i < insideArrayNode.size(); i += 1) {
+                        multiPolygonArrayNode.add(insideArrayNode.get(i));
+                    }
+                } else {
+                    System.out.println(resultSet.getString("district"));
+                    tempSqlSentence = "select st_astext(geom) from district_boundary where province = '河北省' and city = '" + resultSet.getString("district") + "'";
+                    tempResultSet = getResultSet(tempSqlSentence);
+                    if (tempResultSet.next()) {
+                        ArrayNode insideArrayNode = multiPolygonStringToArrayNode(tempResultSet.getString("st_astext"));
+                        for (int i = 0; i < insideArrayNode.size(); i += 1) {
+                            multiPolygonArrayNode.add(insideArrayNode.get(i));
+                        }
+                    }
+                }
+            }
+            objectNode.put("produce_company_num", produceCompanyNum);
+            objectNode.put("matched_company_num", matchedCompanyNum);
+            objectNode.put("related_company_num", relatedCompanyNum);
+            objectNode.put("income", income);
+            objectNode.set("cluster", clusterArrayNode);
+            objectNode.set("multipolygon", multiPolygonArrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | IllegalParameterException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
 }
