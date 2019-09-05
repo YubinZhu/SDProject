@@ -26,7 +26,7 @@ public class ApplicationConfigure {
 
     public static final String password = "";
 
-    public static final int maxThreads = 32;
+    public static final int maxThreads = 8;
 
     /* for geo service */
     public static final String geoUrl = "https://restapi.amap.com/v3/geocode/geo";
