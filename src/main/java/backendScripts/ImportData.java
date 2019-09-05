@@ -29,23 +29,35 @@ public class ImportData {
 
     private static final boolean batch = false;
 
+    private static final int maxThreads = 16;
+
     /* WARNING: If main() fucntion don't stop, there must be some wrong data. */
     public static void main(String[] args) {
         try {
-            createListedCompanyTable();
-            importListedCompanyData();
-            addListedCompanyColumn();
-            createShandongCompanyTable();
-            importShandongCompanyData();
-            createShandongDigitalParkTable();
-            importShandongDigitalParkData();
-            createShandongDigitalCompanyTable();
-            importShandongDigitalCompanyData();
-            createDistrictBoundaryTable();
-            importDistrictBoundaryData();
-            updateListedCompanyProvinceCity();
-            createHebeiClusterTable();
-            importHebeiClusterData();
+            /* listed company */
+            // createListedCompanyTable();
+            // importListedCompanyData();
+            // addListedCompanyColumn();
+            // updateListedCompanyProvinceCity();
+            /* shandong company */
+            // createShandongCompanyTable();
+            // importShandongCompanyData();
+            // updateShandongCompanyProvince();
+            /* shandong digital park */
+            // createShandongDigitalParkTable();
+            // importShandongDigitalParkData();
+            /* shandong digital company */
+            // createShandongDigitalCompanyTable();
+            // importShandongDigitalCompanyData();
+            /* district boundary */
+            // createDistrictBoundaryTable();
+            // importDistrictBoundaryData();
+            /* hebei cluster */
+            // createHebeiClusterTable();
+            // importHebeiClusterData();
+            /* five hundred */
+            createFiveHundredTable();
+            importFiveHundredTable();
         } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }
@@ -135,7 +147,6 @@ public class ImportData {
         workbook.close();
     }
 
-    /* WARNING: Dangerous function! */
     private static void addListedCompanyColumn() throws IOException, ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "alter table listed_company drop column if exists industrial_type";
@@ -143,6 +154,7 @@ public class ImportData {
         sqlSentence = "alter table listed_company add industrial_type varchar(16)";
         System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
         Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/产业类型.xlsx"));
+        ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
         for (int i = 0; i < workbook.getNumberOfSheets(); i += 1) {
             Sheet sheet = workbook.getSheetAt(i);
             for (int j = 1; j <= sheet.getLastRowNum(); j += 1) {
@@ -157,12 +169,21 @@ public class ImportData {
                     sqlSentence = "update listed_company set industrial_type = '" + row.getCell(0) +
                             "' where website = '" + row.getCell(3) + "' and industrial_type is null";
                 }
-                ExecutorService executorService = Executors.newSingleThreadExecutor();
                 executorService.submit(new DatabaseExecutor(sqlSentence, "listed_add-" + i + "-" + j));
-                executorService.shutdown();
             }
         }
+        executorService.shutdown();
         workbook.close();
+    }
+
+    private static void updateListedCompanyProvinceCity() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "update listed_company set province = concat(province, '市') where province in ('上海', '北京', '重庆', '天津')";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "update listed_company set city = concat(left(province, 2), '城区') where province in ('上海市', '北京市', '重庆市', '天津市') and right(city, 2) != '城区'";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "update listed_company set city = '莱芜区' where city = '莱芜市'";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void createShandongCompanyTable() throws ClassNotFoundException, SQLException {
@@ -213,6 +234,12 @@ public class ImportData {
             }
             workbook.close();
         }
+    }
+
+    private static void updateShandongCompanyProvince() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "update shandong_company set province = concat(province, '省') where province = '山东'";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
     }
 
     private static void createShandongDigitalParkTable() throws ClassNotFoundException, SQLException {
@@ -368,16 +395,6 @@ public class ImportData {
         }
     }
 
-    private static void updateListedCompanyProvinceCity() throws ClassNotFoundException, SQLException{
-        String sqlSentence;
-        sqlSentence = "update listed_company set province = concat(province, '市') where province in ('上海', '北京', '重庆', '天津')";
-        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
-        sqlSentence = "update listed_company set city = concat(left(province, 2), '城区') where province in ('上海市', '北京市', '重庆市', '天津市') and right(city, 2) != '城区'";
-        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
-        sqlSentence = "update listed_company set city = '莱芜区' where city = '莱芜市'";
-        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
-    }
-
     private static void createHebeiClusterTable() throws ClassNotFoundException, SQLException {
         String sqlSentence;
         sqlSentence = "drop table if exists hebei_cluster";
@@ -390,6 +407,7 @@ public class ImportData {
     private static void importHebeiClusterData() throws IOException {
         Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/河北省产业集群.xlsx"));
         Sheet sheet = workbook.getSheetAt(0);
+        ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
         for (int i = 1; i <= sheet.getLastRowNum(); i += 1) {
             Row row = sheet.getRow(i);
             String sqlSentence = "insert into hebei_cluster(city, cluster_name, district, industrial_type, production, produce_company_num, matched_company_num, related_company_num, income) values('" +
@@ -397,9 +415,61 @@ public class ImportData {
                     row.getCell(3).toString().replace(" ", "") + "', '" + row.getCell(4).toString().replace(" ", "") + "', '" +
                     row.getCell(5).toString().replace(" ", "") + "', " + row.getCell(6).toString() + ", " +
                     row.getCell(7).toString() + ", " + row.getCell(8).toString() + ", " + row.getCell(9).toString() + ")";
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
             executorService.submit(new DatabaseExecutor(sqlSentence, "hebei-cluster-0-" + i));
-            executorService.shutdown();
         }
+        executorService.shutdown();
+        workbook.close();
+    }
+
+    private static void createFiveHundredTable() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "drop table if exists five_hundred";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "create table five_hundred(id serial primary key, rank_2018 int, rank_2017 int, name varchar(64), " +
+                "income float4, profit float4, address varchar(128), chairman varchar(8), sec_code varchar(16), employee_num int, " +
+                "code varchar(32), website varchar(128), pure_assets float, assets float, value float, pure_profit_rate float, " +
+                "pure_assets_rate float, income_rate float, profit_rate float, lon float4, lat float4)";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+    }
+
+    private static void importFiveHundredTable() throws IOException {
+        Workbook workbook = WorkbookFactory.create(new FileInputStream("misc/2018年中国500强排行榜.xlsx"));
+        Sheet sheet = workbook.getSheetAt(0);
+        ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
+        for (int i = 1; i <= sheet.getLastRowNum(); i += 1) {
+            Row row = sheet.getRow(i);
+            String location;
+            try {
+                URL url = new URL(address + "?address=" + row.getCell(5).toString().replace("#", "号").replace(" ", "") + "&key=" + key + "&batch=" + batch);
+                location = new ObjectMapper().readValue(url, ObjectNode.class).get("geocodes").get(0).get("location").asText();
+            } catch (NullPointerException e) {
+                System.out.println("#five-hundred-0-" + i + ": get location failed.");
+                continue;
+            } catch (IOException e) {
+                System.out.println("#five-hundred-0-" + i + ": unknown error.");
+                continue;
+            }
+            String sqlSentence = "insert into five_hundred(rank_2018, rank_2017, name, income, profit, address, chairman, " +
+                    "sec_code, employee_num, code, website, pure_assets, assets, value, pure_profit_rate, pure_assets_rate, " +
+                    "income_rate, profit_rate, lon, lat) values(" + row.getCell(0).toString() + ", " +
+                    row.getCell(1).toString() + ", '" + row.getCell(2).toString() + "', " +
+                    row.getCell(3).toString() + ", " + row.getCell(4).toString() + ", '" + row.getCell(5).toString() + "', '" +
+                    row.getCell(6).toString() + "', '" + row.getCell(7).toString() + "', " + row.getCell(8).toString().replace(",", "") + ", '" +
+                    row.getCell(9).toString() + "', '" + row.getCell(10).toString() + "', " +
+                    row.getCell(11).toString().replace(",", "") + ", " +
+                    row.getCell(12).toString().replace(",", "") + ", " +
+                    row.getCell(13).toString().replace(",", "") + ", " +
+                    row.getCell(14).toString().replace(",", "") + ", " +
+                    row.getCell(15).toString().replace(",", "") + ", " +
+                    row.getCell(16).toString().replace(",", "") + ", " +
+                    row.getCell(17).toString().replace(",", "") + ", " +
+                    location.split(",")[0] + ", " + location.split(",")[1] + ")";
+            sqlSentence = sqlSentence.replace("'--'", "null").replace("'空'", "null")
+                    .replace("'-'", "null").replace("--,", "null,")
+                    .replace("-,", "null,").replace("空,", "null,");
+            executorService.submit(new DatabaseExecutor(sqlSentence, "five-hundred-0-" + i));
+        }
+        executorService.shutdown();
+        workbook.close();
     }
 }
