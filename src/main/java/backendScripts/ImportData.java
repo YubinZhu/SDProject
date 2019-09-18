@@ -56,9 +56,11 @@ public class ImportData {
             // createHebeiClusterTable();
             // importHebeiClusterData();
             /* five hundred */
-            createFiveHundredTable();
-            importFiveHundredTable();
-        } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
+            // createFiveHundredTable();
+            // importFiveHundredTable();
+            /* custom region */
+            createCustomRegionTable();
+        } catch (ClassNotFoundException | SQLException /*| IOException*/ | NullPointerException e) {
             e.printStackTrace();
         }
         System.out.flush();
@@ -471,5 +473,17 @@ public class ImportData {
         }
         executorService.shutdown();
         workbook.close();
+    }
+
+    private static void createCustomRegionTable() throws ClassNotFoundException, SQLException {
+        String sqlSentence;
+        sqlSentence = "drop table if exists custom_region";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "create table custom_region(id serial primary key, name varchar(32))";
+        System.out.println(DatabaseExecutor.executeUpdate(sqlSentence) + " on {" + sqlSentence + "}");
+        sqlSentence = "select addgeometrycolumn('custom_region', 'geom', 4326, 'multipolygon', 2)";
+        ResultSet resultSet = DatabaseExecutor.executeQuery(sqlSentence);
+        resultSet.next();
+        System.out.println(resultSet.getString("addgeometrycolumn") + " on {" + sqlSentence + "}");
     }
 }

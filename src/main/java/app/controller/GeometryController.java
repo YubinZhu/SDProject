@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static app.service.DatabaseService.getResultSet;
+import static app.service.DatabaseService.update;
 
 /**
  * Created by yubzhu on 19-8-4
@@ -29,6 +30,30 @@ public class GeometryController {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final LogService log = new LogService(GeometryController.class);
+
+    static ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException {
+        return (ArrayNode)objectMapper.readTree(multiPolygonString.replace("MULTIPOLYGON(((", "[[[").replace(")))", "]]]").replace(")),((", "],[").replace(",", "],[").replace(" ", ","));
+    }
+
+    private static String arrayNodeToMultiPolygonString(ArrayNode arrayNode) {
+        return arrayNode.toString().replace("[[[", "MULTIPOLYGON(((").replace("]]]", ")))").replace(",", " ").replace("] [", ",").replace("],[", ")),((");
+    }
+
+    private ArrayNode packupPolygon(String sqlSentence, String level) throws InterruptedException, ExecutionException, TimeoutException, SQLException, IOException {
+        ResultSet resultSet = getResultSet(sqlSentence);
+        ArrayNode arrayNode = objectMapper.createArrayNode();
+        while (resultSet.next()) {
+            ObjectNode objectNode = objectMapper. createObjectNode();
+            if (level.equals("country")) {
+                objectNode.put("name", "中华人民共和国");
+            } else {
+                objectNode.put("name", resultSet.getString(level));
+            }
+            objectNode.set("multipolygon", multiPolygonStringToArrayNode(resultSet.getString("st_astext")));
+            arrayNode.add(objectNode);
+        }
+        return arrayNode;
+    }
 
     @GetMapping("/geo")
     public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
@@ -52,26 +77,6 @@ public class GeometryController {
     @GetMapping("/default")
     public ObjectNode queryDefaultDistrictPolygon(HttpServletRequest httpServletRequest) {
         return queryDistrictPolygon(httpServletRequest, null, null, null, "city");
-    }
-
-    static ArrayNode multiPolygonStringToArrayNode(String multiPolygonString) throws IOException{
-        return (ArrayNode)objectMapper.readTree(multiPolygonString.replace("MULTIPOLYGON(((", "[[[").replace(")))", "]]]").replace(")),((", "],[").replace(",", "],[").replace(" ", ", ").replace("],[", "], ["));
-    }
-
-    private ArrayNode packupPolygon(String sqlSentence, String level) throws InterruptedException, ExecutionException, TimeoutException, SQLException, IOException {
-        ResultSet resultSet = getResultSet(sqlSentence);
-        ArrayNode arrayNode = objectMapper.createArrayNode();
-        while (resultSet.next()) {
-            ObjectNode objectNode = objectMapper. createObjectNode();
-            if (level.equals("country")) {
-                objectNode.put("name", "中华人民共和国");
-            } else {
-                objectNode.put("name", resultSet.getString(level));
-            }
-            objectNode.set("multipolygon", multiPolygonStringToArrayNode(resultSet.getString("st_astext")));
-            arrayNode.add(objectNode);
-        }
-        return arrayNode;
     }
 
     @GetMapping("/district")
@@ -168,10 +173,45 @@ public class GeometryController {
         }
     }
 
-    @GetMapping("/customize")
-    public ObjectNode updateCustomizedRegion(HttpServletRequest httpServletRequest) {
-        // todo
-        return null;
+    @GetMapping("/save")
+    public ObjectNode saveCustomizedRegion(HttpServletRequest httpServletRequest,
+                                           @RequestParam(value = "geom") String geom,
+                                           @RequestParam(value = "name") String name) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            ResultSet resultSet = getResultSet("select count(*) from custom_region where name = '" + name + "'");
+            resultSet.next();
+            Integer integer;
+            if (resultSet.getInt("count") != 0) {
+                integer = update("update custom_region set geom = st_geomfromtext('" + arrayNodeToMultiPolygonString((ArrayNode)objectMapper.readTree(geom)) + "', 4326) where name = '" + name + "'");
+                objectNode.put("message", "override");
+            } else {
+                integer = update("insert into custom_region(name, geom) values('" + name + "', st_geomfromtext('" + arrayNodeToMultiPolygonString((ArrayNode)objectMapper.readTree(geom)) + "', 4326))");
+            }
+            objectNode.put("result", integer.toString());
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
     }
 
+    @GetMapping("/load")
+    public ObjectNode loadCustomizedRegion(HttpServletRequest httpServletRequest,
+                                           @RequestParam(value = "name") String name) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            ResultSet resultSet = getResultSet("select name, st_astext(geom) from custom_region where name = '" + name + "'");
+            if (resultSet.next()) {
+                objectNode.set("multipolygon", multiPolygonStringToArrayNode(resultSet.getString("st_astext")));
+            } else {
+                objectNode.put("multipolygon", (Short)null);
+            }
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
 }

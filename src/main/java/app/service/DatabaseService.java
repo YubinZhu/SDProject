@@ -42,6 +42,10 @@ public class DatabaseService {
         }
     }
 
+    public static Integer update(String sqlSentence) throws InterruptedException, ExecutionException, TimeoutException {
+        return new DatabaseService().executeUpdate(sqlSentence).get(timeoutInterval, timeoutTimeUnit);
+    }
+
     private Future<ResultSet> executeQuery(String sqlSentence) {
         return executorService.submit(new QueryExecutor(sqlSentence));
     }
