@@ -58,6 +58,7 @@ public class HebeiClusterController {
             ResultSet resultSet = getResultSet(sqlSentence);
             ArrayNode arrayNode = objectMapper.createArrayNode();
             while (resultSet.next()) {
+                arrayNode.add(resultSet.getInt("id"));
                 arrayNode.add(resultSet.getString("cluster_name"));
             }
             objectNode.set("cluster", arrayNode);
@@ -71,12 +72,22 @@ public class HebeiClusterController {
 
     @GetMapping("/information")
     public ObjectNode queryGeometry(HttpServletRequest httpServletRequest,
-                                    @RequestParam(value = "name") String name) {
+                                    @RequestParam(value = "name", required = false) String name,
+                                    @RequestParam(value = "id", required = false) String id) {
         try {
             ObjectNode objectNode = objectMapper.createObjectNode();
-            String sqlSentence = "select * from hebei_cluster where cluster_name = '" + name + "' order by id asc";
+            if (name == null && id == null) {
+                throw new IllegalParameterException();
+            }
+            String sqlSentence;
+            if (name != null) {
+                sqlSentence = "select * from hebei_cluster where cluster_name = '" + name + "' order by id asc";
+            } else {
+                sqlSentence = "select * from hebei_cluster where id = " + id;
+            }
             ResultSet resultSet = getResultSet(sqlSentence);
             if (resultSet.next()) {
+                objectNode.put("id", resultSet.getInt("id"));
                 objectNode.put("city", resultSet.getString("city"));
                 objectNode.put("name", resultSet.getString("cluster_name"));
                 objectNode.put("district", resultSet.getString("district"));
