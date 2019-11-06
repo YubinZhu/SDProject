@@ -35,32 +35,32 @@ public class ImportData {
     public static void main(String[] args) {
         try {
             /* listed company */
-            // createListedCompanyTable();
-            // importListedCompanyData();
-            // addListedCompanyColumn();
-            // updateListedCompanyProvinceCity();
+             createListedCompanyTable();
+             importListedCompanyData();
+             addListedCompanyColumn();
+             updateListedCompanyProvinceCity();
             /* shandong company */
-            // createShandongCompanyTable();
-            // importShandongCompanyData();
-            // updateShandongCompanyProvince();
+             createShandongCompanyTable();
+             importShandongCompanyData();
+             updateShandongCompanyProvince();
             /* shandong digital park */
-            // createShandongDigitalParkTable();
-            // importShandongDigitalParkData();
+             createShandongDigitalParkTable();
+             importShandongDigitalParkData();
             /* shandong digital company */
-            // createShandongDigitalCompanyTable();
-            // importShandongDigitalCompanyData();
+             createShandongDigitalCompanyTable();
+             importShandongDigitalCompanyData();
             /* district boundary */
-            // createDistrictBoundaryTable();
-            // importDistrictBoundaryData();
+             createDistrictBoundaryTable();
+             importDistrictBoundaryData();
             /* hebei cluster */
-            // createHebeiClusterTable();
-            // importHebeiClusterData();
+             createHebeiClusterTable();
+             importHebeiClusterData();
             /* five hundred */
-            // createFiveHundredTable();
-            // importFiveHundredTable();
+             createFiveHundredTable();
+             importFiveHundredTable();
             /* custom region */
             createCustomRegionTable();
-        } catch (ClassNotFoundException | SQLException /*| IOException*/ | NullPointerException e) {
+        } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }
         System.out.flush();

@@ -9,14 +9,14 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationConfigure {
 
     /* for controller */
-    public static final int timeoutInterval = 120;
+    public static final int timeoutInterval = 30;
 
     public static final TimeUnit timeoutTimeUnit = TimeUnit.SECONDS;
 
     /* for database service */
     public static final String driver = "org.postgresql.Driver";
 
-    public static final String ip = "100.64.137.141";
+    public static final String ip = "219.141.209.3";
 
     public static final String port = "5432";
 
