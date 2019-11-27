@@ -114,7 +114,7 @@ public class HebeiClusterController {
         }
     }
 
-    @GetMapping("/statistic")
+    @GetMapping("/statistic-old")
     public ObjectNode queryStatistic(HttpServletRequest httpServletRequest,
                                      @RequestParam(value = "type") String type) {
         try {
@@ -162,6 +162,62 @@ public class HebeiClusterController {
             log.printExecuteOkInfo(httpServletRequest);
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | IllegalParameterException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/statistics")
+    public ObjectNode queryStatistics(HttpServletRequest httpServletRequest) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select industrial_type, count(*) as count from hebei_cluster where industrial_type is not null group by industrial_type";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ObjectNode tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("industrial_type"), resultSet.getInt("count"));
+            }
+            objectNode.set("industrial_type_count", tempObjectNode);
+            sqlSentence = "select industrial_type, sum(income) as sum from hebei_cluster where industrial_type is not null group by industrial_type";
+            resultSet = getResultSet(sqlSentence);
+            tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("industrial_type"), resultSet.getInt("sum"));
+            }
+            objectNode.set("industrial_type_sum", tempObjectNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/heatmap")
+    public ObjectNode queryHeatmap(HttpServletRequest httpServletRequest) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select lon, lat from hebei_cluster order by id asc";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            objectNode.put("type", "FeatureCollection");
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (resultSet.next()) {
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("type", "Feature");
+                tempObjectNode.put("weight", 1);
+                ObjectNode insideObjectNode = objectMapper.createObjectNode();
+                insideObjectNode.put("type", "Point");
+                ArrayNode insideArrayNode = objectMapper.createArrayNode();
+                insideArrayNode.add(resultSet.getDouble("lon"));
+                insideArrayNode.add(resultSet.getDouble("lat"));
+                insideObjectNode.set("coordinates", insideArrayNode);
+                tempObjectNode.set("geometry", insideObjectNode);
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("features", arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }

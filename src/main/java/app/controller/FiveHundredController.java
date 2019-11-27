@@ -153,8 +153,29 @@ public class FiveHundredController {
         }
     }
 
-    @GetMapping("/statistic")
-    public ObjectNode queryStatistic(HttpServletRequest httpServletRequest) {
-        return null;
+    @GetMapping("/statistics")
+    public ObjectNode queryStatistics(HttpServletRequest httpServletRequest) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select name, profit from five_hundred order by profit desc limit 20";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ObjectNode tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("name"), resultSet.getDouble("profit"));
+            }
+            objectNode.set("profit_rank", tempObjectNode);
+            sqlSentence = "select name, income from five_hundred order by income desc limit 20";
+            resultSet = getResultSet(sqlSentence);
+            tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("name"), resultSet.getInt("income"));
+            }
+            objectNode.set("income_rank", tempObjectNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
     }
 }

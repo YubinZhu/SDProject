@@ -35,31 +35,31 @@ public class ImportData {
     public static void main(String[] args) {
         try {
             /* listed company */
-             createListedCompanyTable();
-             importListedCompanyData();
-             addListedCompanyColumn();
-             updateListedCompanyProvinceCity();
-            /* shandong company */
-             createShandongCompanyTable();
-             importShandongCompanyData();
-             updateShandongCompanyProvince();
-            /* shandong digital park */
-             createShandongDigitalParkTable();
-             importShandongDigitalParkData();
-            /* shandong digital company */
-             createShandongDigitalCompanyTable();
-             importShandongDigitalCompanyData();
-            /* district boundary */
-             createDistrictBoundaryTable();
-             importDistrictBoundaryData();
-            /* hebei cluster */
-             createHebeiClusterTable();
-             importHebeiClusterData();
-            /* five hundred */
-             createFiveHundredTable();
-             importFiveHundredTable();
-            /* custom region */
-            createCustomRegionTable();
+            createListedCompanyTable();
+            importListedCompanyData();
+            addListedCompanyColumn();
+            updateListedCompanyProvinceCity();
+//            /* shandong company */
+//            createShandongCompanyTable();
+//            importShandongCompanyData();
+//            updateShandongCompanyProvince();
+//            /* shandong digital park */
+//            createShandongDigitalParkTable();
+//            importShandongDigitalParkData();
+//            /* shandong digital company */
+//            createShandongDigitalCompanyTable();
+//            importShandongDigitalCompanyData();
+//            /* district boundary */
+//            createDistrictBoundaryTable();
+//            importDistrictBoundaryData();
+//            /* hebei cluster */
+//            createHebeiClusterTable();
+//            importHebeiClusterData();
+//            /* five hundred */
+//            createFiveHundredTable();
+//            importFiveHundredTable();
+//            /* custom region */
+//            createCustomRegionTable();
         } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }

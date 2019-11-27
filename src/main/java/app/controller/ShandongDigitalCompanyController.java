@@ -193,4 +193,30 @@ public class ShandongDigitalCompanyController {
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
     }
+
+    @GetMapping("/statistics")
+    public ObjectNode queryStatistics(HttpServletRequest httpServletRequest) {
+        try {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            String sqlSentence = "select company_type, count(*) as count from shandong_digital_company where company_type is not null group by company_type";
+            ResultSet resultSet = getResultSet(sqlSentence);
+            ObjectNode tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("company_type"), resultSet.getInt("count"));
+            }
+            objectNode.set("company_type_count", tempObjectNode);
+            sqlSentence = "select city, count(*) as count from shandong_digital_company where city is not null group by city";
+            resultSet = getResultSet(sqlSentence);
+            tempObjectNode = objectMapper.createObjectNode();
+            while (resultSet.next()) {
+                tempObjectNode.put(resultSet.getString("city"), resultSet.getInt("count"));
+            }
+            objectNode.set("city_count", tempObjectNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
 }

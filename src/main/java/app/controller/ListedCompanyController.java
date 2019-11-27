@@ -247,33 +247,6 @@ public class ListedCompanyController {
         }
     }
 
-    // todo: discard this function in future version.
-    @GetMapping("/geo")
-    public ObjectNode queryGeo(HttpServletRequest httpServletRequest,
-                               @RequestParam(value = "address") String address) {
-        try {
-            ObjectNode objectNode = objectMapper.createObjectNode();
-            String location = AMapService.getGeo(address);
-            if (location == null) {
-                throw new NullPointerException();
-            }
-            objectNode.put("lon", location.split(",")[0]);
-            objectNode.put("lat", location.split(",")[1]);
-            String sqlSentence = "select id from listed_company where address ~* '" + address + "' order by id asc limit 20";
-            ResultSet resultSet = getResultSet(sqlSentence);
-            ArrayNode arrayNode = objectMapper.createArrayNode();
-            while (resultSet.next()) {
-                arrayNode.add(resultSet.getInt("id"));
-            }
-            objectNode.set("result", arrayNode);
-            log.printExecuteOkInfo(httpServletRequest);
-            return objectNode;
-        } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | NullPointerException e) {
-            log.printExceptionOccurredError(httpServletRequest, e);
-            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
-        }
-    }
-
     @GetMapping("/statistic")
     public ObjectNode queryStatistic(HttpServletRequest httpServletRequest,
                                      @RequestParam(required = false, value = "type") String type,
