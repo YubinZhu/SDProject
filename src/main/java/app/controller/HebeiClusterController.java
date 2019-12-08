@@ -178,7 +178,7 @@ public class HebeiClusterController {
                 tempObjectNode.put(resultSet.getString("industrial_type"), resultSet.getInt("count"));
             }
             objectNode.set("industrial_type_count", tempObjectNode);
-            sqlSentence = "select industrial_type, sum(income) as sum from hebei_cluster where industrial_type is not null group by industrial_type";
+            sqlSentence = "select industrial_type, sum(income) as sum from hebei_cluster where industrial_type is not null group by industrial_type order by sum desc";
             resultSet = getResultSet(sqlSentence);
             tempObjectNode = objectMapper.createObjectNode();
             while (resultSet.next()) {
