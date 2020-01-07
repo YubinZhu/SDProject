@@ -6,12 +6,17 @@ import app.service.LogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
+import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -210,6 +215,59 @@ public class GeometryController {
             }
             return objectNode;
         } catch (InterruptedException | ExecutionException | TimeoutException | SQLException | IOException | NullPointerException e) {
+            log.printExceptionOccurredError(httpServletRequest, e);
+            return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
+        }
+    }
+
+    @GetMapping("/analyze")
+    public ObjectNode realtimeAnalyze(HttpServletRequest httpServletRequest,
+                                             @RequestParam("file") MultipartFile uploadFile) {
+        try {
+            if (uploadFile.isEmpty() || uploadFile.getSize() == 0) {
+                throw new IllegalParameterException();
+            }
+//            String path = httpServletRequest.getContextPath();
+            String fileName = uploadFile.getOriginalFilename();
+            File file = new File(Optional.ofNullable(fileName).orElse("new_file_" + System.currentTimeMillis()));
+            uploadFile.transferTo(file);
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String header = reader.readLine();
+            String[] headers = header.split(",");
+
+            int addressIndex = 0;
+            for (; addressIndex < headers.length; addressIndex += 1) {
+                if (headers[addressIndex].equals("address")) {
+                    break;
+                }
+            }
+
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.put("type", "FeatureCollection");
+            ArrayNode arrayNode = objectMapper.createArrayNode();
+            while (true) {
+                String string = reader.readLine();
+                if (string == null) {
+                    break;
+                }
+                String[] strings = string.split(",");
+                ObjectNode result = queryGeo(httpServletRequest, strings[addressIndex]);
+                ObjectNode tempObjectNode = objectMapper.createObjectNode();
+                tempObjectNode.put("type", "Feature");
+                tempObjectNode.put("weight", 1);
+                ObjectNode insideObjectNode = objectMapper.createObjectNode();
+                insideObjectNode.put("type", "Point");
+                ArrayNode insideArrayNode = objectMapper.createArrayNode();
+                insideArrayNode.add(Double.parseDouble(result.get("lon").asText()));
+                insideArrayNode.add(Double.parseDouble(result.get("lat").asText()));
+                insideObjectNode.set("coordinates", insideArrayNode);
+                tempObjectNode.set("geometry", insideObjectNode);
+                arrayNode.add(tempObjectNode);
+            }
+            objectNode.set("features", arrayNode);
+            log.printExecuteOkInfo(httpServletRequest);
+            return objectNode;
+        } catch (IOException | IllegalStateException | IllegalParameterException e) {
             log.printExceptionOccurredError(httpServletRequest, e);
             return objectMapper.createObjectNode().put("exception", e.getClass().getSimpleName());
         }
