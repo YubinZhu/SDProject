@@ -227,11 +227,7 @@ public class GeometryController {
             if (uploadFile.isEmpty() || uploadFile.getSize() == 0) {
                 throw new IllegalParameterException();
             }
-//            String path = httpServletRequest.getContextPath();
-            String fileName = uploadFile.getOriginalFilename();
-            File file = new File(Optional.ofNullable(fileName).orElse("new_file_" + System.currentTimeMillis()));
-            uploadFile.transferTo(file);
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(uploadFile.getInputStream()));
             String header = reader.readLine();
             String[] headers = header.split(",");
 
@@ -251,15 +247,21 @@ public class GeometryController {
                     break;
                 }
                 String[] strings = string.split(",");
-                ObjectNode result = queryGeo(httpServletRequest, strings[addressIndex]);
+                if (strings.length <= addressIndex) {
+                    continue;
+                }
                 ObjectNode tempObjectNode = objectMapper.createObjectNode();
                 tempObjectNode.put("type", "Feature");
                 tempObjectNode.put("weight", 1);
                 ObjectNode insideObjectNode = objectMapper.createObjectNode();
                 insideObjectNode.put("type", "Point");
                 ArrayNode insideArrayNode = objectMapper.createArrayNode();
-                insideArrayNode.add(Double.parseDouble(result.get("lon").asText()));
-                insideArrayNode.add(Double.parseDouble(result.get("lat").asText()));
+                String location = AMapService.getGeo(strings[addressIndex]);
+                if (location == null) {
+                    continue;
+                }
+                insideArrayNode.add(Double.parseDouble(location.split(",")[0]));
+                insideArrayNode.add(Double.parseDouble(location.split(",")[1]));
                 insideObjectNode.set("coordinates", insideArrayNode);
                 tempObjectNode.set("geometry", insideObjectNode);
                 arrayNode.add(tempObjectNode);
