@@ -221,6 +221,7 @@ public class GeometryController {
     }
 
     @GetMapping("/analyze")
+    @PostMapping("/analyze")
     public ObjectNode realtimeAnalyze(HttpServletRequest httpServletRequest,
                                              @RequestParam("file") MultipartFile uploadFile) {
         try {
