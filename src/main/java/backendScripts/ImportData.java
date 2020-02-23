@@ -35,14 +35,14 @@ public class ImportData {
     public static void main(String[] args) {
         try {
             /* listed company */
-//            createListedCompanyTable();
-//            importListedCompanyData();
-//            addListedCompanyColumn();
-//            updateListedCompanyProvinceCity();
+            createListedCompanyTable();
+            importListedCompanyData();
+            addListedCompanyColumn();
+            updateListedCompanyProvinceCity();
 //            /* shandong company */
-            createShandongCompanyTable();
-            importShandongCompanyData();
-            updateShandongCompanyProvince();
+//            createShandongCompanyTable();
+//            importShandongCompanyData();
+//            updateShandongCompanyProvince();
 //            /* shandong digital park */
 //            createShandongDigitalParkTable();
 //            importShandongDigitalParkData();
