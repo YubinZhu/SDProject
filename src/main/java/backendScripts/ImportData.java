@@ -1,5 +1,7 @@
 package backendScripts;
 
+import app.exception.IllegalParameterException;
+import app.service.AMapService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -7,7 +9,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.URL;
 import java.sql.ResultSet;
@@ -31,14 +37,15 @@ public class ImportData {
 
     private static final int maxThreads = 16;
 
-    /* WARNING: If main() fucntion don't stop, there must be some wrong data. */
+    /* WARNING: If main() function don't stop, there must be some wrong data. */
     public static void main(String[] args) {
         try {
             /* listed company */
-            createListedCompanyTable();
-            importListedCompanyData();
-            addListedCompanyColumn();
-            updateListedCompanyProvinceCity();
+            if (false) {
+                createListedCompanyTable();
+                importListedCompanyData();
+                addListedCompanyColumn();
+                updateListedCompanyProvinceCity();
 //            /* shandong company */
 //            createShandongCompanyTable();
 //            importShandongCompanyData();
@@ -60,6 +67,8 @@ public class ImportData {
 //            importFiveHundredTable();
 //            /* custom region */
 //            createCustomRegionTable();
+            }
+            getAllLocation("misc/需经纬度.csv");
         } catch (ClassNotFoundException | SQLException | IOException | NullPointerException e) {
             e.printStackTrace();
         }
@@ -485,5 +494,46 @@ public class ImportData {
         ResultSet resultSet = DatabaseExecutor.executeQuery(sqlSentence);
         resultSet.next();
         System.out.println(resultSet.getString("addgeometrycolumn") + " on {" + sqlSentence + "}");
+    }
+
+    private static void getAllLocation(String fileAddress) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(fileAddress));
+            Writer writer = new FileWriter(new File(fileAddress.split("\\.csv")[0] + "_result.csv"));
+            String header = reader.readLine();
+            String[] headers = header.split(",");
+
+            int addressIndex = 0;
+            for (; addressIndex < headers.length; addressIndex += 1) {
+                if (headers[addressIndex].equals("address")) {
+                    break;
+                }
+            }
+
+            writer.write(header + ",lon,lat\n");
+
+            while (true) {
+                String string = reader.readLine();
+                if (string == null) {
+                    break;
+                }
+                String[] strings = string.split(",");
+                if (strings.length <= addressIndex) {
+                    writer.write(string + ",,\n");
+                    continue;
+                }
+                String location = AMapService.getGeo(strings[addressIndex]);
+                if (location == null) {
+                    writer.write(string + ",,\n");
+                    continue;
+                }
+                writer.write(string + "," + location.split(",")[0] + "," + location.split(",")[1] + "\n");
+            }
+
+            writer.flush();
+            writer.close();
+        } catch (IOException | IllegalStateException | IllegalParameterException e) {
+            e.printStackTrace();
+        }
     }
 }
