@@ -23,6 +23,10 @@ public class Filter {
         field = Optional.ofNullable(filterJson).map((x) -> x.get("field")).map(JsonNode::asText).orElse("0");
         type = Type.valueOf(Optional.ofNullable(filterJson).map((x) -> x.get("type")).map(JsonNode::asText).orElse("in"));
         JsonNode conditionsJson = Optional.ofNullable(filterJson).map((x) -> x.get("conditions")).orElse(objectMapper.createArrayNode().add("0"));
+        boolean isInData = Optional.ofNullable(filterJson).map((x) -> x.get("in_data")).map(JsonNode::asBoolean).orElse(false);
+        if (isInData) {
+            field = "data->>'" + this.getField() + "'";
+        }
         conditions = new ArrayList<>();
         for (JsonNode conditionJson : conditionsJson) {
             conditions.add(conditionJson.asText());

@@ -71,6 +71,11 @@ public class Request {
             dimensionSqlList.add(dimension.toSql());
         }
         String dimensionSql = String.join(COMMA_SPACE, dimensionSqlList);
+        List<String> dimensionSqlListInGroupByClause = new ArrayList<>();
+        for (Dimension dimension : dimensions) {
+            dimensionSqlListInGroupByClause.add(dimension.toSqlInGroupByClause());
+        }
+        String dimensionSqlInGroupByClause = String.join(COMMA_SPACE, dimensionSqlListInGroupByClause);
         List<String> metricSqlList = new ArrayList<>();
         for (Metric metric : metrics) {
             metricSqlList.add(metric.toSql());
@@ -99,7 +104,7 @@ public class Request {
         }
         if (dimensionSqlList.size() != 0) {
             sqlList.add(GROUP_BY);
-            sqlList.add(dimensionSql);
+            sqlList.add(dimensionSqlInGroupByClause);
         }
 
         return String.join(SPACE, sqlList);

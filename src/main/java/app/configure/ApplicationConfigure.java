@@ -16,8 +16,9 @@ public class ApplicationConfigure {
     /* for database service */
     public static final String driver = "org.postgresql.Driver";
 
-    public static final String ip = "100.64.137.141";
-    //public static final String ip = "219.141.209.3";
+//    public static final String ip = "100.64.137.141";
+    //public static final String ip = "100.64.174.1";
+    public static final String ip = "172.17.0.5";
 
     public static final String port = "5432";
 

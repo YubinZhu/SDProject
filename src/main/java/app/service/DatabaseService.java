@@ -67,7 +67,7 @@ public class DatabaseService {
                 connection.close();
                 return result;
             } catch (ClassNotFoundException | SQLException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getClass().getName());
+                LoggerFactory.getLogger(this.getClass()).error(e.getClass().getName(), e.getMessage());
                 return null;
             }
         }

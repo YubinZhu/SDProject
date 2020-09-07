@@ -2,6 +2,7 @@ package app.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 public class Dimension {
@@ -17,6 +18,16 @@ public class Dimension {
     }
 
     public String toSql() {
-        return field;
+        if (Arrays.asList("id", "label", "create_time", "entity_name", "province", "city", "lon", "lat", "category", "geom").contains(field)) {
+            return field;
+        }
+        return "data->>'" + field + "' as " + field;
+    }
+
+    public String toSqlInGroupByClause() {
+        if (Arrays.asList("id", "label", "create_time", "entity_name", "province", "city", "lon", "lat", "category", "geom").contains(field)) {
+            return field;
+        }
+        return "data->>'" + field + "'";
     }
 }

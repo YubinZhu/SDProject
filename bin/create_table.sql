@@ -21,3 +21,6 @@ insert into sd_entity_data (label, create_time, entity_name, province, city, lon
 select * from sd_entity_data;
 select label, count(1) as n from sd_entity_data group by label;
 select jsonb_array_element_text(data->'a', 0) as data from sd_entity_data;
+
+
+select * from sd_entity_data where label = 'listed_company' and data->>'CCID_industry' = '高端装备'
